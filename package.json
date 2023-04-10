@@ -1,0 +1,40 @@
+{
+  "name": "remix-hook-form",
+  "version": "1.0.0",
+  "description": "Utility wrapper around react-hook-form",
+  "main": "build/index.js",
+  "scripts": {
+    "prepare": "tsc",
+    "prepublish": "npm run prepare",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Code-Forge-Net/remix-hook-form.git"
+  },
+  "keywords": [
+    "React",
+    "Remix",
+    "Remix.run",
+    "react-hook-form",
+    "hooks",
+    "forms"
+  ],
+  "author": "Alem Tuzlak",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Code-Forge-Net/remix-hook-form/issues"
+  },
+  "homepage": "https://github.com/Code-Forge-Net/remix-hook-form#readme",
+  "peerDependencies": {
+    "@remix-run/react": "^1.15.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.43.9"
+  },
+  "devDependencies": {
+    "@hookform/resolvers": "^3.0.1",
+    "@types/react": "^18.0.34",
+    "typescript": "^5.0.4"
+  }
+}
