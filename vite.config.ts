@@ -4,7 +4,6 @@ import { defineConfig } from "vite";
 import ts2 from "rollup-plugin-typescript2";
 
 export default defineConfig({
-  assetsInclude: ["**/*.md"],
   plugins: [
     {
       ...ts2({
@@ -29,6 +28,7 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ["react", "react-dom", "react-hook-form", "@remix-run/react"],
+
       output: {
         globals: {
           react: "React",
