@@ -1,6 +1,6 @@
 # remix-hook-form
 
-remix-hook-form is a lightweight wrapper around [remix-hook-form](https://react-hook-form.com/) that makes it easier to use in your [Remix](https://remix.run) applications. It provides a set of hooks and utilities that simplify the process of working with forms and form data, while leveraging the power and flexibility of remix-hook-form.
+remix-hook-form is a lightweight wrapper around [react-hook-form](https://react-hook-form.com/) that makes it easier to use in your [Remix](https://remix.run) applications. It provides a set of hooks and utilities that simplify the process of working with forms and form data, while leveraging the power and flexibility of react-hook-form.
 
 ## Installation
 
@@ -34,7 +34,7 @@ const resolver = zodResolver(schema);
 
 export const action = async ({ request }: ActionArgs) => {
   const { errors, data } =
-    await getValidatedFormData<FormData>(request, resolver);
+    (await getValidatedFormData) < FormData > (request, resolver);
   if (errors) {
     return json(errors);
   }
