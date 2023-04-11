@@ -4,11 +4,17 @@ import { defineConfig } from "vite";
 import ts2 from "rollup-plugin-typescript2";
 
 export default defineConfig({
-  assetsInclude: ["**/*.md"],
   plugins: [
     {
       ...ts2({
         check: true,
+        exclude: [
+          "**/__tests__/**",
+          "**/__mocks__/**",
+          "**/*.test.ts",
+          "vitest.config.ts",
+          "vite.config.ts",
+        ],
         tsconfig: resolve(__dirname, `tsconfig.json`),
         tsconfigOverride: {
           compilerOptions: {
@@ -29,6 +35,7 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ["react", "react-dom", "react-hook-form", "@remix-run/react"],
+
       output: {
         globals: {
           react: "React",

@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "prepare": "vite build",
-    "test": "test"
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -55,6 +55,7 @@
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
     "typescript": "^5.0.4",
-    "vite": "^4.2.1"
+    "vite": "^4.2.1",
+    "vitest": "^0.30.1"
   }
 }

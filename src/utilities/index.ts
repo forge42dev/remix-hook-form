@@ -76,12 +76,15 @@ export const parseFormData = async <T extends any>(
 ): Promise<T> => {
   const formData = await request.formData();
   const data = formData.get(key);
+
   if (!data) {
     throw new Error("No data found");
   }
+
   if (!(typeof data === "string")) {
     throw new Error("Data is not a string");
   }
+
   return JSON.parse(data);
 };
 /**
@@ -111,13 +114,7 @@ export const mergeErrors = <T extends FieldValues>(
       }
       mergeErrors(frontendErrors[key]!, rightValue);
     } else {
-      if (frontendErrors[key]) {
-        if (rightValue.message) {
-          frontendErrors[key]!.message = rightValue.message;
-        }
-      } else {
-        frontendErrors[key] = rightValue;
-      }
+      frontendErrors[key] = rightValue;
     }
   }
 
