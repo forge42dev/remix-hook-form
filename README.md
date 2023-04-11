@@ -1,5 +1,14 @@
 # remix-hook-form
 
+![GitHub Repo stars](https://img.shields.io/github/stars/Code-Forge-Net/remix-hook-form?style=social)
+![npm](https://img.shields.io/npm/v/remix-hook-form?style=plastic)
+![GitHub](https://img.shields.io/github/license/Code-Forge-Net/remix-hook-form?style=plastic)
+![npm](https://img.shields.io/npm/dy/remix-hook-form?style=plastic)
+![GitHub issues](https://img.shields.io/github/issues/Code-Forge-Net/remix-hook-form?style=plastic)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Code-Forge-Net/remix-hook-form?style=plastic)
+![GitHub last commit](https://img.shields.io/github/last-commit/Code-Forge-Net/remix-hook-form?style=plastic)
+![GitHub top language](https://img.shields.io/github/languages/top/Code-Forge-Net/remix-hook-form?style=plastic) 
+
 remix-hook-form is a lightweight wrapper around [react-hook-form](https://react-hook-form.com/) that makes it easier to use in your [Remix](https://remix.run) applications. It provides a set of hooks and utilities that simplify the process of working with forms and form data, while leveraging the power and flexibility of react-hook-form.
 
 ## Installation
@@ -33,7 +42,8 @@ type FormData = zod.infer<typeof schema>;
 const resolver = zodResolver(schema);
 
 export const action = async ({ request }: ActionArgs) => {
-  const { errors, data } = await getValidatedFormData<FormData>(request, resolver);
+  const { errors, data } =
+    await getValidatedFormData<FormData>(request, resolver);
   if (errors) {
     return json(errors);
   }

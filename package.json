@@ -37,7 +37,6 @@
     "url": "https://github.com/Code-Forge-Net/remix-hook-form/issues"
   },
   "homepage": "https://github.com/Code-Forge-Net/remix-hook-form#readme",
-  "dependencies": {},
   "peerDependencies": {
     "@remix-run/react": "^1.15.0",
     "react": "^18.2.0",
@@ -46,15 +45,15 @@
   },
   "readme": "https://github.com/Code-Forge-Net/remix-hook-form#readme",
   "devDependencies": {
+    "@hookform/resolvers": "^3.0.1",
     "@remix-run/react": "^1.15.0",
+    "@types/node": "^18.15.11",
+    "@types/react": "^18.0.34",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.43.9",
-    "@hookform/resolvers": "^3.0.1",
-    "@types/react": "^18.0.34",
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
-    "tsup": "^6.7.0",
     "typescript": "^5.0.4",
     "vite": "^4.2.1"
   }
