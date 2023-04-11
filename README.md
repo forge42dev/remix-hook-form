@@ -33,8 +33,7 @@ type FormData = zod.infer<typeof schema>;
 const resolver = zodResolver(schema);
 
 export const action = async ({ request }: ActionArgs) => {
-  const { errors, data } =
-    (await getValidatedFormData) < FormData > (request, resolver);
+  const { errors, data } = await getValidatedFormData<FormData>(request, resolver);
   if (errors) {
     return json(errors);
   }

@@ -34,7 +34,6 @@ export default defineConfig({
       // make sure to externalize deps that shouldn't be bundled
       // into your library
       external: ["react", "react-dom", "react-hook-form", "@remix-run/react"],
-
       output: {
         // Provide global variables to use in the UMD build
         // for externalized deps
