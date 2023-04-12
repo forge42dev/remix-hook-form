@@ -88,23 +88,94 @@ export default function MyForm() {
 
 ## Utilities
 <hr />
+
 ## getValidatedFormData
 
 getValidatedFormData is a utility function that can be used to validate form data in your action. It takes two arguments: the request object and the resolver function. It returns an object with two properties: `errors` and `data`. If there are no errors, `errors` will be `undefined`. If there are errors, `errors` will be an object with the same shape as the `errors` object returned by `useRemixForm`. If there are no errors, `data` will be an object with the same shape as the `data` object returned by `useRemixForm`.
+
+```jsx
+/** all the same code from above */
+
+export const action = async ({ request }: ActionArgs) => {
+  // Takes the request from the frontend, parses and validates it and returns the data
+  const { errors, data } =
+    await getValidatedFormData<FormData>(request, resolver);
+  if (errors) {
+    return json(errors);
+  }
+  // Do something with the data
+};
+
+```
 
 ## validateFormData
 
 validateFormData is a utility function that can be used to validate form data in your action. It takes two arguments: the request object and the resolver function. It returns an object with two properties: `errors` and `data`. If there are no errors, `errors` will be `undefined`. If there are errors, `errors` will be an object with the same shape as the `errors` object returned by `useRemixForm`. If there are no errors, `data` will be an object with the same shape as the `data` object returned by `useRemixForm`.
 
-The difference between `validateFormData` and `getValidatedFormData` is that `validateFormData` only validates the data while the `getValidatedFormData` function also extracts the data automatically from the request object assuming you were using the default setup
+The difference between `validateFormData` and `getValidatedFormData` is that `validateFormData` only validates the data while the `getValidatedFormData` function also extracts the data automatically from the request object assuming you were using the default setup.
+
+```jsx
+/** all the same code from above */
+
+export const action = async ({ request }: ActionArgs) => {
+  // Lets assume you get the data in a different way here but still want to validate it
+  const formData = await yourWayOfGettingFormData(request);
+  // Takes the request from the frontend, parses and validates it and returns the data
+  const { errors, data } =
+    await validateFormData<FormData>(formData, resolver);
+  if (errors) {
+    return json(errors);
+  }
+  // Do something with the data
+};
+
+```
 
 ## createFormData
 
 createFormData is a utility function that can be used to create a FormData object from the data returned by the handleSubmit function from `react-hook-form`. It takes two arguments, first one is the `data` from the `handleSubmit` function and the second one is the key that the data will be stored in the FormData object. (default is `formData`). It returns a FormData object.
 
+```jsx
+/** all the same code from above */
+
+export default function MyForm() {
+  const { ... } = useRemixForm({
+    ...,
+    submitHandlers: {
+      onValid: data => {
+        // This will create a FormData instance ready to be sent to the server, by default all your data is stored inside a key called `formData` but this behavior can be changed by passing a second argument to the function
+        const formData = createFormData(data);
+        // Example with a custom key
+        const formDataCustom = createFormData(data, "yourkeyhere");
+        // Do something with the formData
+      }
+    }
+  });
+
+  return (
+   ...
+  );
+}
+
+```
+
 ## parseFormData
 
 parseFormData is a utility function that can be used to parse the data submitted to the action by the handleSubmit function from `react-hook-form`. It takes two arguments, first one is the `request` submitted from the frontend and the second one is the key that the data will be stored in the FormData object. (default is `formData`). It returns an object that contains unvalidated `data` submitted from the frontend.
+
+
+```jsx
+/** all the same code from above */
+
+export const action = async ({ request }: ActionArgs) => {
+  // Allows you to get the data from the request object without having to validate it
+  const formData = await parseFormData(request);
+  // If you used a custom key (eg. `yourkeyhere` from above you can extract like this)
+  const formDataCustom = await parseFormData(request, "yourkeyhere");
+  // Do something with the data
+};
+
+```
 
 <hr />
 
@@ -135,14 +206,96 @@ The `formState.errors` object is automatically populated with the errors returne
 
 This is achieved by using `useActionData` from `@remix-run/react` to get the data returned by the action function. If the data returned by the action function is an object with the same shape as the `errors` object returned by `useRemixForm`, it will automatically populate the `formState.errors` object with the errors returned by the server. To ensure this is done properly, it is recommended that you use `getValidatedFormData` and then return the errors object from the action function as `json(errors)`.
 
+### Examples
 
-## useRemixFormContext
+#### Overriding the default onValid and onInvalid cases
 
-Exactly the same as `useFormContext` from `react-hook-form` but it also returns the changed `formState.errors` and `handleSubmit` object.
+```jsx
+  const { ... } = useRemixForm({
+    ...ALL_THE_SAME_CONFIG_AS_REACT_HOOK_FORM,
+    submitHandlers: {
+      onValid: data => { 
+        // Do something with the formData
+      },
+      onInvalid: errors => {
+        // Do something with the errors
+      }
+    }
+  });
+
+```
+
+#### Overriding the submit from remix to do something else
+
+```jsx
+  const { ... } = useRemixForm({
+    ...ALL_THE_SAME_CONFIG_AS_REACT_HOOK_FORM,
+    submitConfig: {
+      replace: true,
+      method: "PUT",
+      action: "/api/youraction",
+    },
+  });
+
+```
+
+#### Passing additional data to the backend
+
+```jsx
+  const { ... } = useRemixForm({
+    ...ALL_THE_SAME_CONFIG_AS_REACT_HOOK_FORM,
+    submitData: {
+      someFieldsOutsideTheForm: "someValue"
+    },
+  });
+
+```
 
 ## RemixFormProvider
 
-Identical to the `FormProvider` from `react-hook-form`, but it also returns the changed `formState.errors` and `handleSubmit` object.
+Identical to the [`FormProvider`](https://react-hook-form.com/api/formprovider/) from `react-hook-form`, but it also returns the changed `formState.errors` and `handleSubmit` object.
+```jsx
+export default function Form() {
+  const methods = useRemixForm();
+ 
+  return (
+    <RemixFormProvider {...methods} > // pass all methods into the context
+      <form onSubmit={methods.handleSubmit}>
+        <button type="submit" />
+      </form>
+    </RemixFormProvider>
+  );
+}
+
+```
+
+## useRemixFormContext
+
+Exactly the same as [`useFormContext`](https://react-hook-form.com/api/useformcontext/) from `react-hook-form` but it also returns the changed `formState.errors` and `handleSubmit` object.
+
+```jsx
+export default function Form() {
+  const methods = useRemixForm();
+ 
+
+  return (
+    <RemixFormProvider {...methods} > // pass all methods into the context
+      <form onSubmit={methods.handleSubmit}>
+        <NestedInput />
+        <button type="submit" />
+      </form>
+    </RemixFormProvider>
+  );
+}
+
+const NestedInput = () => {
+  const { register } = useRemixFormContext(); // retrieve all hook methods
+  return <input {...register("test")} />;
+}
+
+```
+
+
 
 <hr />
 
@@ -154,7 +307,6 @@ MIT
 
 If you find a bug, please file an issue on [our issue tracker on GitHub](https://github.com/Code-Forge-Net/remix-hook-form/issues)
 
-## Contributing
 
 ## Contributing
 
