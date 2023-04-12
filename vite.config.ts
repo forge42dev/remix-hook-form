@@ -12,8 +12,7 @@ export default defineConfig({
           "**/__tests__/**",
           "**/__mocks__/**",
           "**/*.test.ts",
-          "vitest.config.ts",
-          "vite.config.ts",
+          "**/*.config.ts",
         ],
         tsconfig: resolve(__dirname, `tsconfig.json`),
         tsconfigOverride: {
