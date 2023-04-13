@@ -12,6 +12,7 @@ export default defineConfig({
           "**/__tests__/**",
           "**/__mocks__/**",
           "**/*.test.ts",
+          "**/*.test.tsx",
           "**/*.config.ts",
         ],
         tsconfig: resolve(__dirname, `tsconfig.json`),
