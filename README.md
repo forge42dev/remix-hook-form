@@ -299,6 +299,9 @@ const NestedInput = () => {
 
 <hr />
 
+## Support 
+
+If you like the project, please consider supporting us by giving a ⭐️ on Github.
 ## License
 
 MIT

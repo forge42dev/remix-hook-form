@@ -1,5 +1,13 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { useRemixForm } from "./index";
+import {
+  renderHook,
+  act,
+  waitFor,
+  cleanup,
+  render,
+  fireEvent,
+} from "@testing-library/react";
+import { RemixFormProvider, useRemixForm, useRemixFormContext } from "./index";
+import React from "react";
 
 const submitMock = vi.fn();
 vi.mock("@remix-run/react", () => ({
@@ -75,5 +83,37 @@ describe("useRemixForm", () => {
         action: "/submit",
       });
     });
+  });
+});
+
+afterEach(cleanup);
+
+describe("RemixFormProvider", () => {
+  it("should allow the user to submit via the useRemixForm handleSubmit using the context", () => {
+    const { result } = renderHook(() =>
+      useRemixForm({
+        resolver: () => ({ values: {}, errors: {} }),
+        submitConfig: {
+          action: "/submit",
+        },
+      })
+    );
+    const spy = vi.spyOn(result.current, "handleSubmit");
+
+    const TestComponent = () => {
+      const { handleSubmit } = useRemixFormContext();
+      return <form onSubmit={handleSubmit} data-testid="test"></form>;
+    };
+
+    const { getByTestId } = render(
+      <RemixFormProvider {...result.current}>
+        <TestComponent />
+      </RemixFormProvider>
+    );
+
+    const form = getByTestId("test") as HTMLFormElement;
+    fireEvent.submit(form);
+
+    expect(spy).toHaveBeenCalled();
   });
 });
