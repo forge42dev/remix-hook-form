@@ -5,6 +5,55 @@ import {
   FieldErrorsImpl,
   DeepRequired,
 } from "react-hook-form";
+
+/**
+ * Generates an output object from the given form data, where the keys in the output object retain
+ * the structure of the keys in the form data. Keys containing integer indexes are treated as arrays.
+ *
+ * @param {FormData} formData - The form data to generate an output object from.
+ * @returns {Object} The output object generated from the form data.
+ */
+export const generateFormData = (formData: FormData) => {
+  // Initialize an empty output object.
+  const outputObject: Record<any, any> = {};
+
+  // Iterate through each key-value pair in the form data.
+  for (const [key, value] of formData.entries()) {
+    // Split the key into an array of parts.
+    const keyParts = key.split(".");
+    // Initialize a variable to point to the current object in the output object.
+    let currentObject = outputObject;
+
+    // Iterate through each key part except for the last one.
+    for (let i = 0; i < keyParts.length - 1; i++) {
+      // Get the current key part.
+      const keyPart = keyParts[i];
+      // If the current object doesn't have a property with the current key part,
+      // initialize it as an object or array depending on whether the next key part is a valid integer index or not.
+      if (!currentObject[keyPart]) {
+        currentObject[keyPart] = /^\d+$/.test(keyParts[i + 1]) ? [] : {};
+      }
+      // Move the current object pointer to the next level of the output object.
+      currentObject = currentObject[keyPart];
+    }
+
+    // Get the last key part.
+    const lastKeyPart = keyParts[keyParts.length - 1];
+
+    // If the last key part is a valid integer index, push the value to the current array.
+    if (/^\d+$/.test(lastKeyPart)) {
+      currentObject.push(value);
+    }
+    // Otherwise, set a property on the current object with the last key part and the corresponding value.
+    else {
+      currentObject[lastKeyPart] = value;
+    }
+  }
+
+  // Return the output object.
+  return outputObject;
+};
+
 /**
  * Parses the data from an HTTP request and validates it against a schema.
  *
@@ -62,7 +111,6 @@ export const createFormData = <T extends FieldValues>(
   return formData;
 };
 /**
-
 Parses the specified Request object's FormData to retrieve the data associated with the specified key.
 @template T - The type of the data to be returned.
 @param {Request} request - The Request object whose FormData is to be parsed.
@@ -78,7 +126,7 @@ export const parseFormData = async <T extends any>(
   const data = formData.get(key);
 
   if (!data) {
-    throw new Error("No data found");
+    return generateFormData(formData);
   }
 
   if (!(typeof data === "string")) {
