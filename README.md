@@ -92,6 +92,8 @@ export default function MyForm() {
 
 Now supports no-js form submissions!
 
+If you made a GET request instead of a POST request and you are using this inside of a loader it will try to extract the data from the search params
+
 If the form is submitted without js it will try to parse the formData object and covert it to the same format as the data object returned by `useRemixForm`. If the form is submitted with js it will automatically extract the data from the request object and validate it.
 
 getValidatedFormData is a utility function that can be used to validate form data in your action. It takes two arguments: the request object and the resolver function. It returns an object with two properties: `errors` and `data`. If there are no errors, `errors` will be `undefined`. If there are errors, `errors` will be an object with the same shape as the `errors` object returned by `useRemixForm`. If there are no errors, `data` will be an object with the same shape as the `data` object returned by `useRemixForm`.
@@ -179,6 +181,10 @@ export const action = async ({ request }: ActionArgs) => {
 };
 
 ```
+
+## getFormDataFromSearchParams
+
+If you're using a GET request formData is not available on the request so you can use this method to extract your formData from the search parameters assuming you set all your data in the search parameters
 
 <hr />
 
@@ -298,9 +304,6 @@ const NestedInput = () => {
 
 ```
 
-
-
-<hr />
 
 ## Support 
 

@@ -39,14 +39,27 @@ export const generateFormData = (formData: FormData) => {
 
     // Get the last key part.
     const lastKeyPart = keyParts[keyParts.length - 1];
+    const lastKeyPartIsArray = /\[\d*\]$|\[\]$/.test(lastKeyPart);
 
-    // If the last key part is a valid integer index, push the value to the current array.
-    if (/^\d+$/.test(lastKeyPart)) {
-      currentObject.push(value);
+    // Handles array[] or array[0] cases
+    if (lastKeyPartIsArray) {
+      const key = lastKeyPart.replace(/\[\d*\]$|\[\]$/, "");
+      if (!currentObject[key]) {
+        currentObject[key] = [];
+      }
+      currentObject[key].push(value);
     }
-    // Otherwise, set a property on the current object with the last key part and the corresponding value.
-    else {
-      currentObject[lastKeyPart] = value;
+
+    // Handles array.foo.0 cases
+    if (!lastKeyPartIsArray) {
+      // If the last key part is a valid integer index, push the value to the current array.
+      if (/^\d+$/.test(lastKeyPart)) {
+        currentObject.push(value);
+      }
+      // Otherwise, set a property on the current object with the last key part and the corresponding value.
+      else {
+        currentObject[lastKeyPart] = value;
+      }
     }
   }
 
@@ -54,20 +67,30 @@ export const generateFormData = (formData: FormData) => {
   return outputObject;
 };
 
+export const getFormDataFromSearchParams = (request: Pick<Request, "url">) => {
+  const searchParams = new URL(request.url).searchParams;
+  return generateFormData(searchParams);
+};
+
+export const isGet = (request: Pick<Request, "method">) =>
+  request.method === "GET" || request.method === "get";
+
 /**
- * Parses the data from an HTTP request and validates it against a schema.
+ * Parses the data from an HTTP request and validates it against a schema. Works in both loaders and actions, in loaders it extracts the data from the search params.
+ * In actions it extracts it from request formData.
  *
  * @async
- * @template T
  * @param {Request} request - An object that represents an HTTP request.
  * @param validator - A function that resolves the schema.
- * @returns {Promise<{ errors: any[] | undefined; data: T | undefined }>} - A Promise that resolves to an object containing the validated data or any errors that occurred during validation.
+ * @returns A Promise that resolves to an object containing the validated data or any errors that occurred during validation.
  */
 export const getValidatedFormData = async <T extends FieldValues>(
   request: Request,
   resolver: Resolver
 ) => {
-  const data = await parseFormData<T>(request);
+  const data = isGet(request)
+    ? getFormDataFromSearchParams(request)
+    : await parseFormData<T>(request);
   const validatedOutput = await validateFormData<T>(data, resolver);
   return validatedOutput;
 };
@@ -146,7 +169,7 @@ The function recursively merges the objects and returns the resulting object.
 */
 export const mergeErrors = <T extends FieldValues>(
   frontendErrors: Partial<FieldErrorsImpl<DeepRequired<T>>>,
-  backendErrors: Partial<FieldErrorsImpl<DeepRequired<T>>>
+  backendErrors?: Partial<FieldErrorsImpl<DeepRequired<T>>>
 ) => {
   if (!backendErrors) {
     return frontendErrors;
