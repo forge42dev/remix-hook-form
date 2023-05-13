@@ -70,7 +70,7 @@ export const useRemixForm = <T extends FieldValues>({
       submitHandlers?.onValid ?? onSubmit,
       submitHandlers?.onInvalid ?? onInvalid
     ),
-    register: (name: Path<T>, options: RegisterOptions<T>) => ({
+    register: (name: Path<T>, options?: RegisterOptions<T>) => ({
       ...methods.register(name, options),
       defaultValue: data?.defaultValues?.[name] ?? "",
     }),
