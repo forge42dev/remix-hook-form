@@ -348,6 +348,13 @@ describe("getValidatedFormData", () => {
         colors: ["red", "green", "blue"],
         numbers: ["1", "2", "3"],
       },
+      receivedValues: {
+        user: {
+          name: "john",
+        },
+        colors: ["red", "green", "blue"],
+        numbers: ["1", "2", "3"],
+      },
       errors: undefined,
     });
   });
@@ -383,6 +390,7 @@ describe("getValidatedFormData", () => {
     );
     expect(validatedFormData).toStrictEqual({
       data: formData,
+      receivedValues: formData,
       errors: undefined,
     });
   });
@@ -416,6 +424,15 @@ describe("getValidatedFormData", () => {
     );
     expect(returnData).toStrictEqual({
       data: {
+        name: "John Doe",
+        age: "30",
+        hobbies: ["Reading", "Writing", "Coding"],
+        other: {
+          skills: ["testing", "testing"],
+          something: "else",
+        },
+      },
+      receivedValues: {
         name: "John Doe",
         age: "30",
         hobbies: ["Reading", "Writing", "Coding"],

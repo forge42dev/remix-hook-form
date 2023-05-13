@@ -92,7 +92,7 @@ export const getValidatedFormData = async <T extends FieldValues>(
     ? getFormDataFromSearchParams(request)
     : await parseFormData<T>(request);
   const validatedOutput = await validateFormData<T>(data, resolver);
-  return validatedOutput;
+  return { ...validatedOutput, receivedValues: data };
 };
 
 /**

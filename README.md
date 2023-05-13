@@ -13,6 +13,7 @@ Remix-hook-form is a powerful and lightweight wrapper around [react-hook-form](h
 
 And the best part? Remix-hook-form has zero dependencies, making it easy to integrate into your existing projects and workflows. Say goodbye to bloated dependencies and hello to a cleaner, more efficient development process with Remix-hook-form. 
 
+Oh, and did we mention that this is fully Progressively enhanced? That's right, you can use this with or without javascript!
 
 ## Installation
 
@@ -24,7 +25,7 @@ Or, if you prefer [yarn](https://yarnpkg.com/):
 
 `yarn add remix-hook-form`
 
-## Usage
+## Basic usage
 
 Here is an example usage of remix-hook-form:
 
@@ -86,6 +87,68 @@ export default function MyForm() {
 }
 ```
 
+## Usage with NO js
+
+Here is an example usage of remix-hook-form:
+
+```jsx
+import { useRemixForm, getValidatedFormData } from "remix-hook-form";
+import { Form } from "@remix-run/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as zod from "zod";
+import { ActionArgs, json } from "@remix-run/server-runtime";
+
+const schema = zod.object({
+  name: zod.string().nonempty(),
+  email: zod.string().email().nonempty(),
+});
+
+type FormData = zod.infer<typeof schema>;
+
+const resolver = zodResolver(schema);
+
+export const action = async ({ request }: ActionArgs) => {
+  const { errors, data, receivedValues: defaultValues } =
+    await getValidatedFormData<FormData>(request, resolver);
+  if (errors) {
+    return json({ errors, defaultValues });
+  }
+  // Do something with the data
+  return json(data);
+};
+
+export default function MyForm() {
+  const {
+    handleSubmit,
+    formState: { errors },
+    register,
+  } = useRemixForm({
+    mode: "onSubmit",
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+    resolver,
+  });
+
+  return (
+    <Form onSubmit={handleSubmit}>
+      <label>
+        Name:
+        <input type="text" {...register("name")} />
+        {errors.name && <p>{errors.name.message}</p>}
+      </label>
+      <label>
+        Email:
+        <input type="email" {...register("email")} />
+        {errors.email && <p>{errors.email.message}</p>}
+      </label>
+      <button type="submit">Submit</button>
+    </Form>
+  );
+}
+```
+
 ## Utilities
 
 ## getValidatedFormData
@@ -96,8 +159,11 @@ If you made a GET request instead of a POST request and you are using this insid
 
 If the form is submitted without js it will try to parse the formData object and covert it to the same format as the data object returned by `useRemixForm`. If the form is submitted with js it will automatically extract the data from the request object and validate it.
 
-getValidatedFormData is a utility function that can be used to validate form data in your action. It takes two arguments: the request object and the resolver function. It returns an object with two properties: `errors` and `data`. If there are no errors, `errors` will be `undefined`. If there are errors, `errors` will be an object with the same shape as the `errors` object returned by `useRemixForm`. If there are no errors, `data` will be an object with the same shape as the `data` object returned by `useRemixForm`.
+getValidatedFormData is a utility function that can be used to validate form data in your action. It takes two arguments: the request object and the resolver function. It returns an object with three properties: `errors`, `receivedValues` and `data`. If there are no errors, `errors` will be `undefined`. If there are errors, `errors` will be an object with the same shape as the `errors` object returned by `useRemixForm`. If there are no errors, `data` will be an object with the same shape as the `data` object returned by `useRemixForm`.
 
+The `receivedValues` property allows you to set the default values of your form to the values that were received from the request object. This is useful if you want to display the form again with the values that were submitted by the user when there is no JS present
+ 
+ ### Example with errors only
 ```jsx
 /** all the same code from above */
 
@@ -107,6 +173,21 @@ export const action = async ({ request }: ActionArgs) => {
     await getValidatedFormData<FormData>(request, resolver);
   if (errors) {
     return json(errors);
+  }
+  // Do something with the data
+};
+```
+
+### Example with errors and receivedValues
+```jsx
+/** all the same code from above */
+
+export const action = async ({ request }: ActionArgs) => {
+  // Takes the request from the frontend, parses and validates it and returns the data
+  const { errors, data, receivedValues } =
+    await getValidatedFormData<FormData>(request, resolver);
+  if (errors) {
+    return json({ errors, receivedValues });
   }
   // Do something with the data
 };
@@ -205,13 +286,13 @@ The hook acts almost identically to the `react-hook-form` hook, with the excepti
 
 The `handleSubmit` function uses two thing under the hood to allow you easier usage in Remix, those two things are:
 
-
 - The success case is provided by default where when the form is validated by the provided resolver, and it has no errors, it will automatically submit the form to the current route using a POST request. The data will be sent as `formData` to the action function.
 - The data that is sent is automatically wrapped into a formData object and passed to the server ready to be used. Easiest way to consume it is by using the `parseFormData` or `getValidatedFormData` function from the `remix-hook-form` package.
 
 
 The `formState.errors` object is automatically populated with the errors returned by the server. If the server returns an object with the same shape as the `errors` object returned by `useRemixForm`, it will automatically populate the `formState.errors` object with the errors returned by the server.
 
+The `register` function returned also has super powers that allows it to set the default value of the input returned from the server.
 
 This is achieved by using `useActionData` from `@remix-run/react` to get the data returned by the action function. If the data returned by the action function is an object with the same shape as the `errors` object returned by `useRemixForm`, it will automatically populate the `formState.errors` object with the errors returned by the server. To ensure this is done properly, it is recommended that you use `getValidatedFormData` and then return the errors object from the action function as `json(errors)`.
 

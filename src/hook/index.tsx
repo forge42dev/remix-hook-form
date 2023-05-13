@@ -8,6 +8,8 @@ import {
 import { useForm, FormProvider } from "react-hook-form";
 import type {
   FieldValues,
+  Path,
+  RegisterOptions,
   UseFormHandleSubmit,
   UseFormProps,
   UseFormReturn,
@@ -60,7 +62,7 @@ export const useRemixForm = <T extends FieldValues>({
     isLoading,
   } = formState;
 
-  const formErrors = mergeErrors<T>(errors, data);
+  const formErrors = mergeErrors<T>(errors, data?.errors ? data.errors : data);
 
   return {
     ...methods,
@@ -68,6 +70,10 @@ export const useRemixForm = <T extends FieldValues>({
       submitHandlers?.onValid ?? onSubmit,
       submitHandlers?.onInvalid ?? onInvalid
     ),
+    register: (name: Path<T>, options: RegisterOptions<T>) => ({
+      ...methods.register(name, options),
+      defaultValue: data?.defaultValues?.[name] ?? "",
+    }),
     formState: {
       dirtyFields,
       isDirty,
