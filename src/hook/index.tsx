@@ -93,6 +93,7 @@ interface RemixFormProviderProps<T extends FieldValues>
   extends Omit<UseFormReturn<T>, "handleSubmit"> {
   children: React.ReactNode;
   handleSubmit: any;
+  register: any;
 }
 export const RemixFormProvider = <T extends FieldValues>({
   children,
