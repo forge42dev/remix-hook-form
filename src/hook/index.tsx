@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { SubmitFunction, useActionData, useSubmit } from "@remix-run/react";
 import {
   SubmitErrorHandler,
@@ -35,9 +35,11 @@ export const useRemixForm = <T extends FieldValues>({
   const submit = useSubmit();
   const data = useActionData();
   const methods = useForm<T>(formProps);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Submits the data to the server when form is valid
   const onSubmit = (data: T) => {
+    setFormSubmitted(true);
     submit(createFormData({ ...data, ...submitData }), {
       method: "post",
       ...submitConfig,
@@ -62,7 +64,15 @@ export const useRemixForm = <T extends FieldValues>({
     isLoading,
   } = formState;
 
-  const formErrors = mergeErrors<T>(errors, data?.errors ? data.errors : data);
+  const onMerge = () => {
+    setFormSubmitted(false);
+  };
+
+  // Will only merge data from useActionData if form was just submitted and only make
+  // formSubmitted false if data exist to useActionData to account for multiple renders
+  const formErrors = formSubmitted
+    ? mergeErrors<T>(errors, data, onMerge)
+    : errors;
 
   return {
     ...methods,

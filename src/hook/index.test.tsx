@@ -8,12 +8,17 @@ import {
 } from "@testing-library/react";
 import { RemixFormProvider, useRemixForm, useRemixFormContext } from "./index";
 import React from "react";
+import * as remixRun from "@remix-run/react";
 
 const submitMock = vi.fn();
 vi.mock("@remix-run/react", () => ({
   useSubmit: () => submitMock,
   useActionData: () => ({}),
 }));
+
+const mockUseActionData = vi
+  .spyOn(remixRun, "useActionData")
+  .mockImplementation(() => ({}));
 
 describe("useRemixForm", () => {
   it("should return all the same output that react-hook-form returns", () => {
@@ -115,5 +120,88 @@ describe("RemixFormProvider", () => {
     fireEvent.submit(form);
 
     expect(spy).toHaveBeenCalled();
+  });
+
+  it("should merge useActionData error on submission only", async () => {
+    const mockError = {
+      userName: { message: "UserName required", type: "custom" },
+    };
+
+    const enum Value_Key {
+      USERNAME = "userName",
+      SCREEN_NAME = "screenName",
+    }
+
+    const defaultValues = {
+      [Value_Key.USERNAME]: "",
+      [Value_Key.SCREEN_NAME]: "",
+    };
+
+    const { result, rerender } = renderHook(() =>
+      useRemixForm({
+        mode: "onSubmit",
+        reValidateMode: "onChange",
+        submitConfig: {
+          action: "/submit",
+        },
+        defaultValues,
+      })
+    );
+
+    // Set useActionData mock after initial render, to simulate a server error
+    mockUseActionData.mockImplementation(() => mockError);
+
+    act(() => {
+      result.current.setValue(Value_Key.SCREEN_NAME, "priceIsWrong");
+    });
+
+    act(() => {
+      result.current.handleSubmit();
+    });
+
+    // Tests that error message is merged.
+    await waitFor(() => {
+      expect(result.current.formState.errors[Value_Key.USERNAME]?.message).toBe(
+        mockError[Value_Key.USERNAME].message
+      );
+    });
+
+    act(() => {
+      result.current.setValue(Value_Key.USERNAME, "Bob Barker");
+      // Simulates revalidation onChange
+      result.current.clearErrors(Value_Key.USERNAME);
+    });
+
+    rerender();
+
+    // This test that error is cleared after state change and not reemerged from useActionData
+    await waitFor(() => {
+      expect(result.current.getValues(Value_Key.USERNAME)).toBe("Bob Barker");
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.formState.errors[Value_Key.USERNAME]?.message
+      ).toBeUndefined();
+    });
+
+    const newScreenName = "CaptainJackSparrow";
+
+    act(() => {
+      result.current.setValue(Value_Key.SCREEN_NAME, newScreenName);
+    });
+
+    // This test that other state changes do not reemerged from useActionData
+    await waitFor(() => {
+      expect(result.current.getValues(Value_Key.SCREEN_NAME)).toBe(
+        newScreenName
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.formState.errors[Value_Key.USERNAME]
+      ).toBeUndefined();
+    });
   });
 });

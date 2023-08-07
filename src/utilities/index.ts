@@ -169,9 +169,10 @@ The function recursively merges the objects and returns the resulting object.
 */
 export const mergeErrors = <T extends FieldValues>(
   frontendErrors: Partial<FieldErrorsImpl<DeepRequired<T>>>,
-  backendErrors?: Partial<FieldErrorsImpl<DeepRequired<T>>>
+  backendErrors?: Partial<FieldErrorsImpl<DeepRequired<T>>>,
+  onMerge?: () => void
 ) => {
-  if (!backendErrors) {
+  if (!backendErrors || (onMerge && Object.keys(backendErrors).length === 0)) {
     return frontendErrors;
   }
 
@@ -188,6 +189,8 @@ export const mergeErrors = <T extends FieldValues>(
       frontendErrors[key] = rightValue;
     }
   }
+
+  onMerge && onMerge();
 
   return frontendErrors;
 };
