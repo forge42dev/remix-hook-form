@@ -1,6 +1,6 @@
 {
   "name": "remix-hook-form",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Utility wrapper around react-hook-form for use with Remix.run",
   "type": "module",
   "main": "./dist/index.umd.cjs",
@@ -15,10 +15,25 @@
   "files": [
     "dist"
   ],
+  "workspaces": [
+    "src/testing-app",
+    "."
+  ],
   "scripts": {
-    "prepare": "vite build",
+    "remix-dev": "npm run dev -w src/testing-app",
+    "build:dev": "vite build -m development",
+    "dev": "npm-run-all -s build:dev -p remix-dev vite",
+    "vite": "vite build --watch -m development",
+    "prepublishOnly": "vite build",
     "build": "vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tsc": "tsc",
+    "validate": "npm run lint && npm run tsc && npm run test",
+    "lint": "eslint \"src/**/*.+(ts|tsx)\"",
+    "lint:fix": "npm run lint -- --fix",
+    "prettier": "prettier app --check",
+    "prettier:fix": "prettier app --write",
+    "format-code": "npm run prettier:fix & npm run lint:fix"
   },
   "repository": {
     "type": "git",
@@ -52,7 +67,12 @@
     "@types/node": "^18.15.11",
     "@types/react": "^18.0.34",
     "@vitest/coverage-c8": "^0.30.1",
+    "babel-eslint": "^10.1.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "happy-dom": "^9.5.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.43.9",
