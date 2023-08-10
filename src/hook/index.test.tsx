@@ -8,11 +8,14 @@ import {
 } from "@testing-library/react";
 import { RemixFormProvider, useRemixForm, useRemixFormContext } from "./index";
 import React from "react";
+import { useFetcher } from "@remix-run/react";
 
 const submitMock = vi.fn();
+const fetcherSubmitMock = vi.fn();
 vi.mock("@remix-run/react", () => ({
   useSubmit: () => submitMock,
   useActionData: () => ({}),
+  useFetcher: () => ({ submit: fetcherSubmitMock, data: {} }),
 }));
 
 describe("useRemixForm", () => {
@@ -79,6 +82,31 @@ describe("useRemixForm", () => {
     });
     await waitFor(() => {
       expect(submitMock).toHaveBeenCalledWith(expect.any(FormData), {
+        method: "post",
+        action: "/submit",
+      });
+    });
+  });
+
+  it("should submit the form data to the server using a fetcher when the form is valid", async () => {
+    const {
+      result: { current: fetcher },
+    } = renderHook(() => useFetcher());
+    const { result } = renderHook(() =>
+      useRemixForm({
+        fetcher,
+        resolver: () => ({ values: {}, errors: {} }),
+        submitConfig: {
+          action: "/submit",
+        },
+      })
+    );
+
+    act(() => {
+      result.current.handleSubmit();
+    });
+    await waitFor(() => {
+      expect(fetcherSubmitMock).toHaveBeenCalledWith(expect.any(FormData), {
         method: "post",
         action: "/submit",
       });

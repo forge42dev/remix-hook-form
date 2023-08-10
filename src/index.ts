@@ -6,3 +6,4 @@ export {
   getFormDataFromSearchParams,
 } from "./utilities";
 export * from "./hook";
+export type { UseRemixFormOptions } from "./hook";

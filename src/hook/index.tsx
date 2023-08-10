@@ -1,5 +1,10 @@
 import React from "react";
-import { SubmitFunction, useActionData, useSubmit } from "@remix-run/react";
+import {
+  FetcherWithComponents,
+  SubmitFunction,
+  useActionData,
+  useSubmit,
+} from "@remix-run/react";
 import {
   SubmitErrorHandler,
   SubmitHandler,
@@ -17,23 +22,27 @@ import type {
 import { createFormData, mergeErrors } from "../utilities";
 
 export type SubmitFunctionOptions = Parameters<SubmitFunction>[1];
-interface UseRemixFormOptions<T extends FieldValues> extends UseFormProps<T> {
+
+export interface UseRemixFormOptions<T extends FieldValues>
+  extends UseFormProps<T> {
   submitHandlers?: {
     onValid?: SubmitHandler<T>;
     onInvalid?: SubmitErrorHandler<T>;
   };
   submitConfig?: SubmitFunctionOptions;
   submitData?: FieldValues;
+  fetcher?: FetcherWithComponents<T>;
 }
 
 export const useRemixForm = <T extends FieldValues>({
   submitHandlers,
   submitConfig,
   submitData,
+  fetcher,
   ...formProps
 }: UseRemixFormOptions<T>) => {
-  const submit = useSubmit();
-  const data = useActionData();
+  const submit = fetcher?.submit ?? useSubmit();
+  const data = fetcher?.data ?? useActionData();
   const methods = useForm<T>(formProps);
 
   // Submits the data to the server when form is valid
@@ -43,7 +52,9 @@ export const useRemixForm = <T extends FieldValues>({
       ...submitConfig,
     });
   };
-
+  const values = methods.getValues();
+  const validKeys = Object.keys(values);
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const onInvalid = () => {};
 
   const formState = methods.formState;
@@ -62,7 +73,11 @@ export const useRemixForm = <T extends FieldValues>({
     isLoading,
   } = formState;
 
-  const formErrors = mergeErrors<T>(errors, data?.errors ? data.errors : data);
+  const formErrors = mergeErrors<T>(
+    errors,
+    data?.errors ? data.errors : data,
+    validKeys
+  );
 
   return {
     ...methods,

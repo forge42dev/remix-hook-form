@@ -146,6 +146,10 @@ export default function MyForm() {
 }
 ```
 
+### Fetcher usage
+
+You can pass in a fetcher as an optional prop and the useRemixForm will use that fetcher to submit the data and read the errors instead of the default behavior
+
 ## Utilities
 
 ## getValidatedFormData

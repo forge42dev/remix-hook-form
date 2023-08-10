@@ -14,6 +14,7 @@ export default defineConfig({
           "**/*.test.ts",
           "**/*.test.tsx",
           "**/*.config.ts",
+          "**/testing-app/**",
         ],
         tsconfig: resolve(__dirname, `tsconfig.json`),
         tsconfigOverride: {
