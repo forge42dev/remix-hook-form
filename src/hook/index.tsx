@@ -41,8 +41,10 @@ export const useRemixForm = <T extends FieldValues>({
   fetcher,
   ...formProps
 }: UseRemixFormOptions<T>) => {
-  const submit = fetcher?.submit ?? useSubmit();
-  const data = fetcher?.data ?? useActionData();
+  const actionSubmit = useSubmit();
+  const actionData = useActionData();
+  const submit = fetcher?.submit ?? actionSubmit;
+  const data = fetcher?.data ?? actionData;
   const methods = useForm<T>(formProps);
 
   // Submits the data to the server when form is valid
@@ -76,14 +78,14 @@ export const useRemixForm = <T extends FieldValues>({
   const formErrors = mergeErrors<T>(
     errors,
     data?.errors ? data.errors : data,
-    validKeys
+    validKeys,
   );
 
   return {
     ...methods,
     handleSubmit: methods.handleSubmit(
       submitHandlers?.onValid ?? onSubmit,
-      submitHandlers?.onInvalid ?? onInvalid
+      submitHandlers?.onInvalid ?? onInvalid,
     ),
     register: (name: Path<T>, options?: RegisterOptions<T>) => ({
       ...methods.register(name, options),

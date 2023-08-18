@@ -1,6 +1,6 @@
 {
   "name": "remix-hook-form",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Utility wrapper around react-hook-form for use with Remix.run",
   "type": "module",
   "main": "./dist/index.umd.cjs",
