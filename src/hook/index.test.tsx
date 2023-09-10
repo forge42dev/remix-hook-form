@@ -16,6 +16,7 @@ vi.mock("@remix-run/react", () => ({
   useSubmit: () => submitMock,
   useActionData: () => ({}),
   useFetcher: () => ({ submit: fetcherSubmitMock, data: {} }),
+  useNavigation: () => ({ state: "idle" }),
 }));
 
 describe("useRemixForm", () => {
@@ -56,7 +57,7 @@ describe("useRemixForm", () => {
           onValid,
           onInvalid,
         },
-      })
+      }),
     );
 
     act(() => {
@@ -74,7 +75,7 @@ describe("useRemixForm", () => {
         submitConfig: {
           action: "/submit",
         },
-      })
+      }),
     );
 
     act(() => {
@@ -99,7 +100,7 @@ describe("useRemixForm", () => {
         submitConfig: {
           action: "/submit",
         },
-      })
+      }),
     );
 
     act(() => {
@@ -124,7 +125,7 @@ describe("RemixFormProvider", () => {
         submitConfig: {
           action: "/submit",
         },
-      })
+      }),
     );
     const spy = vi.spyOn(result.current, "handleSubmit");
 
@@ -136,7 +137,7 @@ describe("RemixFormProvider", () => {
     const { getByTestId } = render(
       <RemixFormProvider {...result.current}>
         <TestComponent />
-      </RemixFormProvider>
+      </RemixFormProvider>,
     );
 
     const form = getByTestId("test") as HTMLFormElement;
