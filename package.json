@@ -1,14 +1,14 @@
 {
   "name": "remix-hook-form",
-  "version": "1.2.3",
+  "version": "2.0.0",
   "description": "Utility wrapper around react-hook-form for use with Remix.run",
   "type": "module",
-  "main": "./dist/index.umd.cjs",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "require": "./dist/index.umd.cjs"
+      "require": "./dist/index.cjs"
     }
   },
   "typings": "./dist/index.d.ts",
@@ -20,12 +20,13 @@
     "."
   ],
   "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "remix-dev": "npm run dev -w src/testing-app",
-    "build:dev": "vite build -m development",
-    "dev": "npm-run-all -s build:dev -p remix-dev vite",
-    "vite": "vite build --watch -m development",
-    "prepublishOnly": "vite build",
-    "build": "vite build",
+    "build:dev": "npm run build",
+    "build:dev:watch": "npm run build -- --watch",
+    "dev": "npm-run-all -s build:dev -p remix-dev build:dev:watch",
+    "vite": "npm run build --watch -m development",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "tsc": "tsc",
     "validate": "npm run lint && npm run tsc && npm run test",
@@ -78,6 +79,7 @@
     "react-hook-form": "^7.43.9",
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
+    "tsup": "^7.2.0",
     "typescript": "^5.0.4",
     "vite": "^4.2.1",
     "vitest": "^0.30.1",
