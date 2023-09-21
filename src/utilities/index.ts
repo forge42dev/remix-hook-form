@@ -69,7 +69,13 @@ export const generateFormData = (formData: FormData) => {
 
 export const getFormDataFromSearchParams = (request: Pick<Request, "url">) => {
   const searchParams = new URL(request.url).searchParams;
-  return generateFormData(searchParams as any);
+  // Parse 'formData' object from searchParams to access the nested data
+  const formDataObj = JSON.parse(searchParams.get("formData") || "{}");
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(formDataObj)) {
+    formData.append(key, value as string);
+  }
+  return generateFormData(formData);
 };
 
 export const isGet = (request: Pick<Request, "method">) =>
