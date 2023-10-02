@@ -8,12 +8,14 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-
+import css from "remix-development-tools/index.css";
+import { withDevTools } from "remix-development-tools";
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  ...(css ? [{ rel: "stylesheet", href: css }] : []),
 ];
 
-export default function App() {
+function App() {
   return (
     <html lang="en">
       <head>
@@ -31,3 +33,4 @@ export default function App() {
     </html>
   );
 }
+export default withDevTools(App);

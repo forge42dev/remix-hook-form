@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { json, type ActionArgs } from "@remix-run/node";
+import { json, type ActionFunctionArgs } from "@remix-run/node";
 import { useFetcher } from "@remix-run/react";
 import { getValidatedFormData, useRemixForm } from "remix-hook-form";
 import { z } from "zod";
@@ -12,7 +12,7 @@ type FormData = z.infer<typeof schema>;
 
 const resolver = zodResolver(schema);
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const { data } = await getValidatedFormData<FormData>(request, resolver);
   await new Promise((resolve) => setTimeout(resolve, 2000));
   return null;
@@ -34,7 +34,7 @@ export default function Index() {
     resolver,
     fetcher,
     submitConfig: {
-      action: "GET",
+      method: "GET",
     },
   });
 

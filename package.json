@@ -73,6 +73,7 @@
   "readme": "https://github.com/Code-Forge-Net/remix-hook-form#readme",
   "devDependencies": {
     "@hookform/resolvers": "^3.1.0",
+    "@remix-run/node": "^2.0.0",
     "@remix-run/react": "^2.0.0",
     "@testing-library/react": "^14.0.0",
     "@types/node": "^18.15.11",
@@ -87,6 +88,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.43.9",
+    "remix-development-tools": "^3.1.1",
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
     "tsup": "^7.2.0",
