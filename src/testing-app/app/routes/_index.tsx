@@ -24,11 +24,18 @@ export const action = async ({ request }: ActionArgs) => {
   };
 };
 
+export const loader = () => {
+  return json({ result: "success" });
+};
+
 export default function Index() {
   const fetcher = useFetcher();
   const { register, handleSubmit, formState } = useRemixForm<FormData>({
     resolver,
     fetcher,
+    submitConfig: {
+      action: "GET",
+    },
   });
 
   return (
