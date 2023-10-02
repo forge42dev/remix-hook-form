@@ -16,7 +16,7 @@
     "isbot": "^3.6.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "remix-hook-form": "^1.1.2"
+    "remix-hook-form": "^2.0.2"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.19.3",

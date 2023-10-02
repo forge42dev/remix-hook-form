@@ -38,7 +38,11 @@ export default function Index() {
       <fetcher.Form method="post" onSubmit={handleSubmit}>
         <div>
           <label>
-            Content: <input type="text" {...register("content")} />
+            Content:{" "}
+            <input
+              type="text"
+              {...register("content", { disableProgressiveEnhancement: true })}
+            />
             Error: {formState.errors.content?.message}
           </label>
         </div>

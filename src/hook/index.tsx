@@ -19,7 +19,7 @@ import type {
   UseFormHandleSubmit,
   UseFormProps,
   UseFormReturn,
-} from "react-hook-form/dist/types";
+} from "react-hook-form";
 import { createFormData, mergeErrors } from "../utilities";
 
 export type SubmitFunctionOptions = Parameters<SubmitFunction>[1];
@@ -45,7 +45,7 @@ export const useRemixForm = <T extends FieldValues>({
   const actionSubmit = useSubmit();
   const actionData = useActionData();
   const submit = fetcher?.submit ?? actionSubmit;
-  const data = fetcher?.data ?? actionData;
+  const data: any = fetcher?.data ?? actionData;
   const methods = useForm<T>(formProps);
   const navigation = useNavigation();
   // Either it's submitted to an action or submitted to a fetcher (or neither)
@@ -92,9 +92,16 @@ export const useRemixForm = <T extends FieldValues>({
       submitHandlers?.onValid ?? onSubmit,
       submitHandlers?.onInvalid ?? onInvalid,
     ),
-    register: (name: Path<T>, options?: RegisterOptions<T>) => ({
+    register: (
+      name: Path<T>,
+      options?: RegisterOptions<T> & {
+        disableProgressiveEnhancement?: boolean;
+      },
+    ) => ({
       ...methods.register(name, options),
-      defaultValue: data?.defaultValues?.[name] ?? "",
+      ...(!options?.disableProgressiveEnhancement && {
+        defaultValue: data?.defaultValues?.[name] ?? "",
+      }),
     }),
     formState: {
       dirtyFields,
