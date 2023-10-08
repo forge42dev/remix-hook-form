@@ -35,7 +35,7 @@ describe("useRemixForm", () => {
       isSubmitSuccessful: false,
       isSubmitted: false,
       isSubmitting: false,
-      isValid: false,
+      isValid: true,
       isValidating: false,
       touchedFields: {},
       submitCount: 0,
@@ -56,7 +56,7 @@ describe("useRemixForm", () => {
           onValid,
           onInvalid,
         },
-      })
+      }),
     );
 
     act(() => {
@@ -67,6 +67,43 @@ describe("useRemixForm", () => {
     });
   });
 
+  it("should call onInvalid function when the form is invalid and isValid should be false", async () => {
+    const onValid = vi.fn();
+    const onInvalid = vi.fn();
+    const errors = { name: { message: "Name is required" } };
+    const values = { name: "" };
+
+    const { result } = renderHook(() =>
+      useRemixForm({
+        resolver: () => ({ values, errors }),
+        submitHandlers: {
+          onValid,
+          onInvalid,
+        },
+      }),
+    );
+
+    act(() => {
+      result.current.handleSubmit();
+    });
+
+    await waitFor(() => {
+      expect(result.current.formState).toEqual({
+        dirtyFields: {},
+        isDirty: false,
+        isSubmitSuccessful: false,
+        isSubmitted: false,
+        isSubmitting: false,
+        isValid: false,
+        isValidating: false,
+        touchedFields: {},
+        submitCount: 1,
+        isLoading: false,
+        errors,
+      });
+    });
+  });
+
   it("should submit the form data to the server when the form is valid", async () => {
     const { result } = renderHook(() =>
       useRemixForm({
@@ -74,7 +111,7 @@ describe("useRemixForm", () => {
         submitConfig: {
           action: "/submit",
         },
-      })
+      }),
     );
 
     act(() => {
@@ -99,7 +136,7 @@ describe("useRemixForm", () => {
         submitConfig: {
           action: "/submit",
         },
-      })
+      }),
     );
 
     act(() => {
@@ -124,7 +161,7 @@ describe("RemixFormProvider", () => {
         submitConfig: {
           action: "/submit",
         },
-      })
+      }),
     );
     const spy = vi.spyOn(result.current, "handleSubmit");
 
@@ -136,7 +173,7 @@ describe("RemixFormProvider", () => {
     const { getByTestId } = render(
       <RemixFormProvider {...result.current}>
         <TestComponent />
-      </RemixFormProvider>
+      </RemixFormProvider>,
     );
 
     const form = getByTestId("test") as HTMLFormElement;
