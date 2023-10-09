@@ -7,6 +7,7 @@ import {
   isGet,
   mergeErrors,
   parseFormData,
+  safeKeys,
   validateFormData,
 } from "./index";
 
@@ -108,8 +109,49 @@ describe("parseFormData", () => {
     mockFormData.append("formData", blob);
     requestFormDataSpy.mockResolvedValueOnce(mockFormData);
     await expect(parseFormData(request)).rejects.toThrowError(
-      "Data is not a string"
+      "Data is not a string",
     );
+  });
+});
+
+describe("safeKeys", () => {
+  it("should return dot syntax and final nested field value key", () => {
+    const formValues = {
+      "profile.lastName": "Smith",
+      firstName: "John",
+      heading: { text: "Password" },
+    };
+    const expectedKeys: any = [
+      "profile.lastName",
+      "firstName",
+      "heading",
+      "root",
+      "profile",
+      "lastName",
+    ];
+    const validKeys = safeKeys(formValues);
+
+    expect(validKeys).toEqual(expectedKeys);
+  });
+
+  it("should remove duplicate generated from dot syntax field value keys", () => {
+    const formValues = {
+      "profile.lastName": "Smith",
+      firstName: "John",
+      heading: { text: "Password" },
+      lastName: "smith",
+    };
+    const expectedKeys: any = [
+      "profile.lastName",
+      "firstName",
+      "heading",
+      "lastName",
+      "root",
+      "profile",
+    ];
+    const validKeys = safeKeys(formValues);
+
+    expect(validKeys).toEqual(expectedKeys);
   });
 });
 
@@ -118,8 +160,12 @@ describe("mergeErrors", () => {
     const backendErrors: any = {
       username: { message: "This field is required" },
     };
-    const mergedErrors = mergeErrors({}, backendErrors);
-    expect(mergedErrors).toEqual(backendErrors);
+    const expectedErrors: any = {
+      username: { message: "This field is required", type: "backend" },
+    };
+    const mergedErrors = mergeErrors({}, backendErrors, ["username"]);
+
+    expect(mergedErrors).toEqual(expectedErrors);
   });
 
   it("should return the frontend errors if backend errors is not provided", () => {
@@ -132,7 +178,9 @@ describe("mergeErrors", () => {
     const frontendErrors: any = {
       password: { message: "Password is required" },
       confirmPassword: { message: "Passwords do not match" },
-      profile: { firstName: { message: "First name is required" } },
+      profile: {
+        firstName: { message: "First name is required" },
+      },
     };
     const backendErrors: any = {
       confirmPassword: { message: "Password confirmation is required" },
@@ -143,18 +191,159 @@ describe("mergeErrors", () => {
     };
     const expectedErrors = {
       password: { message: "Password is required" },
-      confirmPassword: { message: "Password confirmation is required" },
+      confirmPassword: {
+        message: "Password confirmation is required",
+        type: "backend",
+      },
       profile: {
         firstName: { message: "First name is required" },
-        lastName: { message: "Last name is required" },
-        address: { street: { message: "Street is required" } },
+        lastName: { message: "Last name is required", type: "backend" },
+        address: { street: { message: "Street is required", type: "backend" } },
       },
     };
-    const mergedErrors = mergeErrors(frontendErrors, backendErrors);
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, [
+      "password",
+      "confirmPassword",
+      "firstName",
+      "lastName",
+      "street",
+    ]);
+
+    expect(mergedErrors).toEqual(expectedErrors);
+  });
+
+  it("should ignore backend data that doesn't conform to react-hook-form errors even if the key exists", () => {
+    const validKeys = ["password", "profile.lastName", "heading", "lastName"];
+    const frontendErrors: any = {
+      password: { message: "required" },
+    };
+    const backendErrors: any = {
+      profile: {
+        heading: { text: "Password" },
+        lastName: { message: "Last name is required" },
+      },
+    };
+    const expectedErrors = {
+      profile: {
+        lastName: { message: "Last name is required", type: "backend" },
+      },
+      password: { message: "required" },
+    };
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
+
+    expect(mergedErrors).toEqual(expectedErrors);
+  });
+
+  it("should override backend type with value you from backend response", () => {
+    const validKeys = ["password", "profile.lastName", "heading", "lastName"];
+    const frontendErrors: any = {
+      password: { message: "required" },
+    };
+    const backendErrors: any = {
+      profile: {
+        heading: { text: "Password" },
+        lastName: { message: "Last name is required", type: "required" },
+      },
+    };
+    const expectedErrors = {
+      profile: {
+        lastName: { message: "Last name is required", type: "required" },
+      },
+      password: { message: "required" },
+    };
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
+
+    expect(mergedErrors).toEqual(expectedErrors);
+  });
+
+  it("should return a backend type error response only", () => {
+    const validKeys = ["password", "profile.lastName", "heading", "lastName"];
+    const frontendErrors: any = {
+      password: { message: "required" },
+    };
+    const backendErrors: any = {
+      profile: {
+        lastName: { type: "min" },
+      },
+    };
+    const expectedErrors = {
+      profile: {
+        lastName: { type: "min" },
+      },
+      password: { message: "required" },
+    };
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
+
+    expect(mergedErrors).toEqual(expectedErrors);
+  });
+
+  it("should return backend root errors", () => {
+    const validKeys: string[] = [];
+    const frontendErrors: any = {};
+    const backendErrors: any = {
+      root: { message: "root error message" },
+      "root.server": { message: "root.server error message" },
+    };
+    const expectedErrors = {
+      root: { message: "root error message", type: "backend" },
+      "root.server": { message: "root.server error message", type: "backend" },
+    };
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
+    expect(mergedErrors).toEqual(expectedErrors);
+  });
+  it("should return nested backend root errors", () => {
+    const validKeys = ["root.server", "server", "toastMessage"];
+    const frontendErrors: any = {};
+    const backendErrors: any = {
+      root: {
+        toastMessage: { message: "root error message" },
+        server: { message: "root.server error message" },
+      },
+      "root.server": { message: "root.server error message" },
+    };
+    const expectedErrors = {
+      root: {
+        server: {
+          message: "root.server error message",
+          type: "backend",
+        },
+        toastMessage: {
+          message: "root error message",
+          type: "backend",
+        },
+      },
+      "root.server": {
+        message: "root.server error message",
+        type: "backend",
+      },
+    };
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
+    expect(mergedErrors).toEqual(expectedErrors);
+  });
+
+  it("should show backend that just use react-hook-form type messages", () => {
+    const validKeys = ["password", "firstName", "lastName"];
+    const frontendErrors: any = {};
+    const backendErrors: any = {
+      password: { message: "Invalid Password" },
+      profile: {
+        firstName: { type: "required" },
+        lastName: { type: "min" },
+      },
+    };
+    const expectedErrors = {
+      password: { message: "Invalid Password", type: "backend" },
+      profile: {
+        firstName: { type: "required" },
+        lastName: { type: "min" },
+      },
+    };
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
     expect(mergedErrors).toEqual(expectedErrors);
   });
 
   it("should overwrite the frontend error message with the backend error message", () => {
+    const validKeys = ["username"];
     const frontendErrors: any = {
       username: { message: "This field is required" },
     };
@@ -162,9 +351,9 @@ describe("mergeErrors", () => {
       username: { message: "The username is already taken" },
     };
     const expectedErrors = {
-      username: { message: "The username is already taken" },
+      username: { message: "The username is already taken", type: "backend" },
     };
-    const mergedErrors = mergeErrors(frontendErrors, backendErrors);
+    const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
     expect(mergedErrors).toEqual(expectedErrors);
   });
 });
@@ -297,7 +486,7 @@ describe("validateFormData", () => {
 
     const returnData = await validateFormData(
       formData,
-      zodResolver(object({ name: string(), email: string().email() }))
+      zodResolver(object({ name: string(), email: string().email() })),
     );
     expect(returnData.errors).toStrictEqual(undefined);
     expect(returnData.data).toStrictEqual(formData);
@@ -310,7 +499,7 @@ describe("validateFormData", () => {
     };
     const returnData = await validateFormData(
       formData,
-      zodResolver(object({ name: string(), email: string().email() }))
+      zodResolver(object({ name: string(), email: string().email() })),
     );
     expect(returnData.errors).toStrictEqual({
       email: {
@@ -338,7 +527,7 @@ describe("getValidatedFormData", () => {
     });
     const formData = await getValidatedFormData(
       request as any,
-      zodResolver(schema)
+      zodResolver(schema),
     );
     expect(formData).toStrictEqual({
       data: {
@@ -386,7 +575,7 @@ describe("getValidatedFormData", () => {
     });
     const validatedFormData = await getValidatedFormData(
       request as any,
-      zodResolver(schema)
+      zodResolver(schema),
     );
     expect(validatedFormData).toStrictEqual({
       data: formData,
@@ -420,7 +609,7 @@ describe("getValidatedFormData", () => {
     });
     const returnData = await getValidatedFormData(
       request as any,
-      zodResolver(schema)
+      zodResolver(schema),
     );
     expect(returnData).toStrictEqual({
       data: {
