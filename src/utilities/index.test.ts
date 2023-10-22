@@ -1,9 +1,14 @@
 import { array, object, string } from "zod";
 import {
+  arrayPathToValueList,
+  cleanArrayStringKeys,
   createFormData,
+  createPathDataList,
   generateFormData,
   getFormDataFromSearchParams,
   getValidatedFormData,
+  isBlob,
+  isEmptyObj,
   isGet,
   mergeErrors,
   parseFormData,
@@ -12,105 +17,67 @@ import {
 } from "./index";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  dataFormValues,
+  dataFormValuesHasJsPathValueList,
+  dataArrayUrl,
+  dataArrayUrlSchema,
+  dataArrayUrlExpect,
+  dataArrayUrlSearchParameterExpected,
+  dataFormValuesHasJsPathValueExpected,
+  dataFormValuesJsFormDataObjectEntries,
+  dataFormValuesNonJsPathValueList,
+  dataFieldValuesNonJsFinal,
+  mockBlob,
+} from "./test.data";
+import { mockRequest } from "./test.utils";
+import { v } from "vitest/dist/types-e3c9754d";
 
 describe("createFormData", () => {
-  it("should create a FormData object with the provided data", () => {
-    const data = {
-      name: "John Doe",
-      age: 30,
-    };
-    const formData = createFormData(data);
-    expect(formData.get("formData")).toEqual(JSON.stringify(data));
+  it("should create a FormData object with the provided data", async () => {
+    const formData = createFormData(dataFormValues);
+    expect(Object.fromEntries(formData)).toMatchObject(
+      dataFormValuesJsFormDataObjectEntries,
+    );
   });
 
-  it("should create a FormData object with the provided key and data", () => {
-    const data = {
-      name: "Jane Doe",
-      age: 25,
-    };
-    const key = "myData";
-    const formData = createFormData(data, key);
-    expect(formData.get(key)).toEqual(JSON.stringify(data));
-  });
-
-  it("should handle empty data", () => {
+  it("should handle empty data", async () => {
     const formData = createFormData({});
-    expect(formData.get("formData")).toEqual("{}");
+
+    expect(formData.get("emptyNull")).toEqual("{}");
   });
 
-  it("should handle null data", () => {
-    const formData = createFormData(null as any);
-    expect(formData.get("formData")).toEqual("null");
+  it("should handle null data", async () => {
+    const formData = createFormData(null);
+
+    expect(formData.get("emptyNull")).toEqual("null");
   });
 });
 
-describe("parseFormData", () => {
-  // Mock the Request and formData methods
-  beforeAll(() => {
-    global.Request = vi.fn();
-    global.Request.prototype.formData = vi.fn();
-  });
-
-  // Reset the mocks after each test
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
+describe("parseFormData", async () => {
   it("should parse the data from the request object", async () => {
-    const data = {
-      name: "John Doe",
-      age: 30,
-    };
-    const request = new Request("http://localhost:3000");
-    const requestFormDataSpy = vi.spyOn(request, "formData");
-    requestFormDataSpy.mockResolvedValueOnce(createFormData(data));
-    const parsedData = await parseFormData<typeof data>(request);
-    expect(parsedData).toEqual(data);
+    const request = await mockRequest(dataFormValues);
+    const parsedData = await parseFormData(request);
+
+    expect(parsedData).toEqual(dataFormValues);
   });
 
   it("should return an empty object if no formData exists", async () => {
-    const request = new Request("http://localhost:3000");
-    const requestFormDataSpy = vi.spyOn(request, "formData");
-    requestFormDataSpy.mockResolvedValueOnce(createFormData({}));
+    const request = await mockRequest({});
     const parsedData = await parseFormData(request);
+
     expect(parsedData).toEqual({});
   });
 
   it("should return formData if NO js was used and formData was passed as is", async () => {
     const formData = new FormData();
-    formData.append("name", "John Doe");
-    formData.append("age", "30");
-    formData.append("hobbies.0", "Reading");
-    formData.append("hobbies.1", "Writing");
-    formData.append("hobbies.2", "Coding");
-    formData.append("other.skills.0", "testing");
-    formData.append("other.skills.1", "testing");
-    formData.append("other.something", "else");
-    const request = new Request("http://localhost:3000");
-    const requestFormDataSpy = vi.spyOn(request, "formData");
-    requestFormDataSpy.mockResolvedValueOnce(formData);
-    const parsedData = await parseFormData(request);
-    expect(parsedData).toEqual({
-      name: "John Doe",
-      age: "30",
-      hobbies: ["Reading", "Writing", "Coding"],
-      other: {
-        skills: ["testing", "testing"],
-        something: "else",
-      },
+    dataFormValuesNonJsPathValueList.forEach(({ path, value }) => {
+      formData.append(path, value);
     });
-  });
+    const request = await mockRequest(formData);
 
-  it("should throw an error if the retrieved data is not a string (but a file instead)", async () => {
-    const request = new Request("http://localhost:3000");
-    const requestFormDataSpy = vi.spyOn(request, "formData");
-    const blob = new Blob(["Hello, world!"], { type: "text/plain" });
-    const mockFormData = new FormData();
-    mockFormData.append("formData", blob);
-    requestFormDataSpy.mockResolvedValueOnce(mockFormData);
-    await expect(parseFormData(request)).rejects.toThrowError(
-      "Data is not a string",
-    );
+    const parsedData = await parseFormData(request);
+    expect(parsedData).toEqual(dataFieldValuesNonJsFinal);
   });
 });
 
@@ -291,6 +258,7 @@ describe("mergeErrors", () => {
     const mergedErrors = mergeErrors(frontendErrors, backendErrors, validKeys);
     expect(mergedErrors).toEqual(expectedErrors);
   });
+
   it("should return nested backend root errors", () => {
     const validKeys = ["root.server", "server", "toastMessage"];
     const frontendErrors: any = {};
@@ -361,15 +329,14 @@ describe("mergeErrors", () => {
 describe("generateFormData", () => {
   it("should generate an output object for flat form data", () => {
     const formData = new FormData();
-    formData.append("name", "John Doe");
-    formData.append("email", "johndoe@example.com");
 
-    const expectedOutput = {
-      name: "John Doe",
-      email: "johndoe@example.com",
-    };
+    dataFormValuesHasJsPathValueList.forEach(({ path, value }) => {
+      formData.append(path, value);
+    });
 
-    expect(generateFormData(formData)).toEqual(expectedOutput);
+    expect(generateFormData(formData)).toMatchObject(
+      dataFormValuesHasJsPathValueExpected,
+    );
   });
 
   it("should generate an output object for nested form data", () => {
@@ -393,9 +360,25 @@ describe("generateFormData", () => {
 
   it("should generate an output object with arrays for integer indexes", () => {
     const formData = new FormData();
-    formData.append("user.roles.0", "admin");
-    formData.append("user.roles.1", "editor");
-    formData.append("user.roles.2", "contributor");
+    formData.append("user.roles.[0]", "admin");
+    formData.append("user.roles.[1]", "editor");
+    formData.append("user.roles.[2]", "contributor");
+
+    const expectedOutput = {
+      user: {
+        roles: ["admin", "editor", "contributor"],
+      },
+    };
+
+    expect(generateFormData(formData)).toEqual(expectedOutput);
+  });
+
+  it("should handle all valid data types strings and blobs, ", () => {
+    const formData = new FormData();
+
+    formData.append("user.roles.[0]", "admin");
+    formData.append("user.roles.[1]", "editor");
+    formData.append("user.roles.[2]", "contributor");
 
     const expectedOutput = {
       user: {
@@ -512,44 +495,32 @@ describe("validateFormData", () => {
   });
 });
 
+describe("cleanArrayStringKeys", () => {
+  it("will clean empty SearchURL empty array params to conform to react-hook-form standard", async () => {
+    const searchParams = new URL(dataArrayUrl).searchParams;
+    const cleanedSearchParams = cleanArrayStringKeys(searchParams);
+    const formData = generateFormData(cleanedSearchParams);
+
+    expect(formData).toEqual(dataArrayUrlExpect);
+  });
+});
+
 describe("getValidatedFormData", () => {
   it("gets valid form data from a GET request", async () => {
-    const request = {
+    const request = await mockRequest(undefined, dataArrayUrl, {
       method: "GET",
-      url: "http://localhost:3000/?user.name=john&colors[]=red&colors[]=green&colors[]=blue&numbers[0]=1&numbers[1]=2&numbers[2]=3",
-    };
-    const schema = object({
-      user: object({
-        name: string(),
-      }),
-      colors: array(string()),
-      numbers: array(string()),
     });
-    const formData = await getValidatedFormData(
-      request as any,
-      zodResolver(schema),
+
+    const validatedOutput = await getValidatedFormData(
+      request,
+      zodResolver(dataArrayUrlSchema),
     );
-    expect(formData).toStrictEqual({
-      data: {
-        user: {
-          name: "john",
-        },
-        colors: ["red", "green", "blue"],
-        numbers: ["1", "2", "3"],
-      },
-      receivedValues: {
-        user: {
-          name: "john",
-        },
-        colors: ["red", "green", "blue"],
-        numbers: ["1", "2", "3"],
-      },
-      errors: undefined,
-    });
+
+    expect(validatedOutput).toEqual(dataArrayUrlSearchParameterExpected);
   });
 
   it("gets valid form data from a POST request when it is js", async () => {
-    const formData = {
+    const fieldValues = {
       name: "John Doe",
       age: "30",
       hobbies: ["Reading", "Writing", "Coding"],
@@ -558,11 +529,11 @@ describe("getValidatedFormData", () => {
         something: "else",
       },
     };
-    const request = new Request("http://localhost:3000");
+    const request = new Request("http://localhost:3000", { method: "POST" });
     const requestFormDataSpy = vi.spyOn(request, "formData");
-    const data = new FormData();
-    data.append("formData", JSON.stringify(formData));
-    requestFormDataSpy.mockResolvedValueOnce(data);
+
+    const formData = createFormData(fieldValues);
+    requestFormDataSpy.mockResolvedValueOnce(formData);
 
     const schema = object({
       name: string(),
@@ -573,13 +544,15 @@ describe("getValidatedFormData", () => {
         something: string(),
       }),
     });
+
     const validatedFormData = await getValidatedFormData(
       request as any,
       zodResolver(schema),
     );
+
     expect(validatedFormData).toStrictEqual({
-      data: formData,
-      receivedValues: formData,
+      data: fieldValues,
+      receivedValues: fieldValues,
       errors: undefined,
     });
   });
@@ -594,7 +567,7 @@ describe("getValidatedFormData", () => {
     formData.append("other.skills.0", "testing");
     formData.append("other.skills.1", "testing");
     formData.append("other.something", "else");
-    const request = new Request("http://localhost:3000");
+    const request = new Request("http://localhost:3000", { method: "post" });
     const requestFormDataSpy = vi.spyOn(request, "formData");
     requestFormDataSpy.mockResolvedValueOnce(formData);
 
@@ -632,5 +605,153 @@ describe("getValidatedFormData", () => {
       },
       errors: undefined,
     });
+  });
+});
+
+describe("isEmptyObj", () => {
+  it("Should return true if empty object", () => {
+    expect(isEmptyObj({})).toBeTruthy();
+  });
+
+  it("Should return NaO if passed empty array", () => {
+    expect(isEmptyObj([])).toEqual("NaO");
+  });
+
+  it("Should return false if object has values", () => {
+    expect(
+      isEmptyObj({ question: "What are you going to call it?" }),
+    ).toBeFalsy();
+  });
+
+  it("Should return NaO if passed string", () => {
+    expect(isEmptyObj(`I think I'll call it "Bob"`)).toEqual("NaO");
+  });
+
+  it("Should return NaO if passed filled array", () => {
+    expect(isEmptyObj(["You", "can't", "call", "a", "planet", "Bob."])).toEqual(
+      "NaO",
+    );
+  });
+});
+
+describe("createPathDataList", () => {
+  it("Should handle all types of data and nesting", () => {
+    expect(createPathDataList(dataFormValues, true)).toEqual(
+      dataFormValuesHasJsPathValueList,
+    );
+  });
+});
+
+describe("isBlob", () => {
+  it("Should return true if value is a Blob", () => {
+    expect(isBlob(mockBlob)).toBeTruthy();
+  });
+
+  it("Should return true if value is a file", () => {
+    const newFile = new File(["Hello world"], "test_file.txt");
+    expect(isBlob(newFile)).toBeTruthy();
+  });
+
+  it("Should return false if value is an object", () => {
+    expect(isBlob({})).toBeFalsy();
+  });
+
+  it("Should return false if value is an string", () => {
+    expect(isBlob("my string")).toBeFalsy();
+  });
+
+  it("Should return false if value is an array", () => {
+    expect(isBlob([1, 2, 3, 4])).toBeFalsy();
+  });
+
+  it("Should return false if value is an function", () => {
+    expect(
+      isBlob(() => {
+        return;
+      }),
+    ).toBeFalsy();
+  });
+});
+
+describe("arrayPathToValueList", () => {
+  it("handles arrays of strings", () => {
+    const fieldDataList = [
+      { path: "profile.fullName", value: '"Capitan Jack Sparrow"' },
+    ];
+
+    const path = "profile.facts";
+    const value = ["loves rum", "has magic campus"];
+    arrayPathToValueList(fieldDataList, path, value, true);
+    const expectedFieldDataList = [
+      {
+        path: "profile.fullName",
+        value: '"Capitan Jack Sparrow"',
+      },
+      {
+        path: "profile.facts.[0]",
+        value: '"loves rum"',
+      },
+      {
+        path: "profile.facts.[1]",
+        value: '"has magic campus"',
+      },
+    ];
+    expect(fieldDataList).toEqual(expectedFieldDataList);
+  });
+
+  it("handles arrays of objects", () => {
+    const fieldDataList = [
+      { path: "profile.fullName", value: '"Capitan Jack Sparrow"' },
+    ];
+
+    const path = "profile.facts";
+    const value = [{ activity: "drinking" }, { activity: "sword fighting" }];
+
+    arrayPathToValueList(fieldDataList, path, value, true);
+
+    const expectedFieldDataList = [
+      {
+        path: "profile.fullName",
+        value: '"Capitan Jack Sparrow"',
+      },
+      {
+        path: "profile.facts.[0].activity",
+        value: '"drinking"',
+      },
+      {
+        path: "profile.facts.[1].activity",
+        value: '"sword fighting"',
+      },
+    ];
+
+    expect(fieldDataList).toEqual(expectedFieldDataList);
+  });
+
+  it("handles arrays of blobs", () => {
+    const fieldDataList = [
+      { path: "profile.fullName", value: '"Capitan Jack Sparrow"' },
+    ];
+
+    const path = "profile.images";
+    const value = [mockBlob, mockBlob];
+
+    arrayPathToValueList(fieldDataList, path, value, true);
+
+    const expectedFieldDataList = [
+      {
+        path: "profile.fullName",
+        value: '"Capitan Jack Sparrow"',
+      },
+      {
+        path: "profile.images.[0]",
+        value: mockBlob,
+      },
+      {
+        path: "profile.images.[1]",
+        value: mockBlob,
+      },
+    ];
+
+    expect(fieldDataList).toMatchObject(expectedFieldDataList);
   });
 });

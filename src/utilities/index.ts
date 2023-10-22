@@ -1,10 +1,13 @@
 import { object } from "zod";
 import {
-  FieldValues,
-  Resolver,
-  FieldErrors,
-  FieldError,
+  type FieldValues,
+  type Resolver,
+  type FieldErrors,
+  type FieldError,
+  set,
 } from "react-hook-form";
+
+type FieldDataObjList = { path: string; value: string | Blob };
 
 /**
  * Generates an output object from the given form data, where the keys in the output object retain
@@ -13,63 +16,77 @@ import {
  * @param {FormData} formData - The form data to generate an output object from.
  * @returns {Object} The output object generated from the form data.
  */
-export const generateFormData = (formData: FormData) => {
-  // Initialize an empty output object.
-  const outputObject: Record<any, any> = {};
+export const generateFormData = <T extends FieldValues>(
+  formData: FormData | URLSearchParams,
+) => {
+  const outputObject = {} as T;
+
+  const hasJs = formData.has("hasJS");
+  hasJs && formData.delete("hasJS");
 
   // Iterate through each key-value pair in the form data.
-  for (const [key, value] of formData.entries()) {
-    // Split the key into an array of parts.
-    const keyParts = key.split(".");
-    // Initialize a variable to point to the current object in the output object.
-    let currentObject = outputObject;
+  for (const [path, value] of formData.entries()) {
+    const cleanValue =
+      hasJs && !isBlob(value) ? JSON.parse(value as string) : value;
 
-    // Iterate through each key part except for the last one.
-    for (let i = 0; i < keyParts.length - 1; i++) {
-      // Get the current key part.
-      const keyPart = keyParts[i];
-      // If the current object doesn't have a property with the current key part,
-      // initialize it as an object or array depending on whether the next key part is a valid integer index or not.
-      if (!currentObject[keyPart]) {
-        currentObject[keyPart] = /^\d+$/.test(keyParts[i + 1]) ? [] : {};
-      }
-      // Move the current object pointer to the next level of the output object.
-      currentObject = currentObject[keyPart];
-    }
-
-    // Get the last key part.
-    const lastKeyPart = keyParts[keyParts.length - 1];
-    const lastKeyPartIsArray = /\[\d*\]$|\[\]$/.test(lastKeyPart);
-
-    // Handles array[] or array[0] cases
-    if (lastKeyPartIsArray) {
-      const key = lastKeyPart.replace(/\[\d*\]$|\[\]$/, "");
-      if (!currentObject[key]) {
-        currentObject[key] = [];
-      }
-      currentObject[key].push(value);
-    }
-
-    // Handles array.foo.0 cases
-    if (!lastKeyPartIsArray) {
-      // If the last key part is a valid integer index, push the value to the current array.
-      if (/^\d+$/.test(lastKeyPart)) {
-        currentObject.push(value);
-      }
-      // Otherwise, set a property on the current object with the last key part and the corresponding value.
-      else {
-        currentObject[lastKeyPart] = value;
-      }
-    }
+    // set FieldValues object to dot syntax path
+    set(outputObject, path, cleanValue);
   }
 
-  // Return the output object.
   return outputObject;
 };
 
-export const getFormDataFromSearchParams = (request: Pick<Request, "url">) => {
+/**
+ * cleanArrayStringUrl - This is a Fix for react-hook-form url empty [] brackets set conversion,
+ * react-hook-form will not load array values that use the empty [] keys.
+ *
+ * This utility will add number keys to empty [].
+ *
+ * Note: empty url arrays and no js forms don't seam to be very popular either.
+ *
+ * @param {string} urlString
+ * @returns {string}
+ */
+// "http://localhost:3000/?user.name=john&car[]=ford&car[]=chevy&colors[]=red&colors[]=green&colors[]=blue&numbers[0]=1";
+export const cleanArrayStringKeys = (urlString: URLSearchParams) => {
+  const cleanedFormData = new URLSearchParams();
+  const counter = {} as Record<string, number>;
+
+  for (const [path, value] of urlString.entries()) {
+    const keys = path.split(/([\D]$\[\])/g);
+    // early return if single key
+    if (keys.length === 1 && !/\[\]/g.test(keys[0])) {
+      cleanedFormData.set(keys.join(""), value);
+      continue;
+    }
+
+    const cleanedKey = [] as string[];
+
+    // adds indexes to empty arrays to match react-hook-form
+    keys.forEach((key) => {
+      key = key.replace(/\.\[/g, "[");
+      counter[key] = (counter[key] === undefined ? -1 : counter[key]) + 1;
+
+      cleanedKey.push(key.replace(/\[\]/g, () => `[${counter[key]}]`));
+
+      // merge array keys back into path
+      const cleanedPath = cleanedKey.join("");
+
+      cleanedFormData.set(cleanedPath, value);
+    });
+  }
+
+  return cleanedFormData;
+};
+
+export const getFormDataFromSearchParams = <T extends FieldValues>(
+  request: Pick<Request, "url">,
+) => {
   const searchParams = new URL(request.url).searchParams;
-  return generateFormData(searchParams as any);
+
+  const cleanedSearchParams = cleanArrayStringKeys(searchParams);
+
+  return generateFormData<T>(cleanedSearchParams);
 };
 
 export const isGet = (request: Pick<Request, "method">) =>
@@ -91,7 +108,9 @@ export const getValidatedFormData = async <T extends FieldValues>(
   const data = isGet(request)
     ? getFormDataFromSearchParams(request)
     : await parseFormData<T>(request);
+
   const validatedOutput = await validateFormData<T>(data, resolver);
+
   return { ...validatedOutput, receivedValues: data };
 };
 
@@ -117,6 +136,7 @@ export const validateFormData = async <T extends FieldValues>(
 
   return { errors: undefined, data: values as T };
 };
+
 /**
   Creates a new instance of FormData with the specified data and key.
   @template T - The type of the data parameter. It can be any type of FieldValues.
@@ -125,14 +145,30 @@ export const validateFormData = async <T extends FieldValues>(
   @returns {FormData} - The FormData object with the data added to it.
 */
 export const createFormData = <T extends FieldValues>(
-  data: T,
-  key = "formData",
+  data?: T | object | null,
 ): FormData => {
+  if (!FormData) console.error("FormData doesn't exist");
+
   const formData = new FormData();
-  const finalData = JSON.stringify(data);
-  formData.append(key, finalData);
+
+  // This lets the parser know that the data was generated by this formData
+  // generator which uses JSON.Stringify to maintain all data types including Blobs
+  formData.append("hasJS", "true");
+
+  if (!data || isEmptyObj(data)) {
+    formData.append("emptyNull", !data ? "null" : "{}");
+    return formData;
+  }
+
+  const fieldDataObjList = createPathDataList(data, true) as FieldDataObjList[];
+
+  fieldDataObjList.forEach(({ path, value }) => {
+    formData.append(path, value);
+  });
+
   return formData;
 };
+
 /**
 Parses the specified Request object's FormData to retrieve the data associated with the specified key.
 @template T - The type of the data to be returned.
@@ -141,22 +177,18 @@ Parses the specified Request object's FormData to retrieve the data associated w
 @returns {Promise<T>} - A promise that resolves to the data of type T.
 @throws {Error} - If no data is found for the specified key, or if the retrieved data is not a string.
 */
-export const parseFormData = async <T extends any>(
+export const parseFormData = async <T extends FieldValues>(
   request: Request,
-  key = "formData",
-): Promise<T> => {
+) => {
   const formData = await request.formData();
-  const data = formData.get(key);
 
-  if (!data) {
-    return generateFormData(formData);
+  // handles {} or null data sends
+  if (formData.has("emptyNull")) {
+    const data = formData.get("emptyNull") as string;
+    return JSON.parse(data);
   }
 
-  if (!(typeof data === "string")) {
-    throw new Error("Data is not a string");
-  }
-
-  return JSON.parse(data);
+  return generateFormData<T>(formData) as T;
 };
 
 /**
@@ -194,7 +226,7 @@ export const mergeErrors = (
         validKeys,
         errorSet,
       );
-      const hasNoMessage = Object.keys(frontendErrors[key] || {}).length < 1;
+      const hasNoMessage = isEmptyObj(frontendErrors[key]);
       // removes the base object since no error was set.
       if (!errorSet && hasNoMessage) {
         delete frontendErrors[key];
@@ -268,4 +300,136 @@ export const safeKeys = (values: object) => {
   });
 
   return [...new Set(validKeys.concat(dotSyntaxKeys))];
+};
+
+/**
+ * isEmptyObj will only be true if passed an empty object
+ *
+ * @param {{}} obj
+ * @returns {boolean}
+ */
+export const isEmptyObj = (obj: any) => {
+  if (typeof obj !== "object" || Array.isArray(obj)) return "NaO"; // Not an object
+  return Object.keys(obj).length === 0 && obj.constructor === Object;
+};
+
+/**
+ * createPathDataList FieldDataObjList array from field data to send to backend.
+ * Allowing for all valid formData types
+ *
+ * @template T
+ * @param {T} formData
+ * @param {?string} [pathKey]
+ * @param {?FieldDataObjList[]} [fieldDataList]
+ * @returns {(FieldDataObjList[] | undefined)}
+ */
+export const createPathDataList = <T extends FieldValues>(
+  fieldValues: T,
+  hasJs: boolean,
+  pathKey?: string,
+  fieldDataList?: FieldDataObjList[],
+): FieldDataObjList[] | undefined => {
+  let isRecursion = true;
+
+  if (!Array.isArray(fieldDataList)) {
+    isRecursion = false;
+    fieldDataList = [];
+  }
+
+  for (const [key, value] of Object.entries<T>(fieldValues)) {
+    const path = `${pathKey ? pathKey + "." : ""}${key}`;
+    const isBlobValue = isBlob(value);
+
+    if (Array.isArray(value)) {
+      arrayPathToValueList(fieldDataList, path, value, hasJs);
+      continue;
+    }
+
+    if (isBlobValue) {
+      const blobValue = value as unknown as Blob;
+      fieldDataList.push({ path, value: blobValue });
+      continue;
+    }
+
+    // handles nested objects
+    if (typeof value === "object" && !isBlobValue && !isEmptyObj(value)) {
+      createPathDataList(value, hasJs, path, fieldDataList);
+      continue;
+    }
+
+    const cleanValue = hasJs ? JSON.stringify(value) : value;
+    fieldDataList.push({
+      path,
+      value: cleanValue as string | Blob, // ToDo: Check this!
+    });
+  }
+
+  if (!isRecursion) {
+    return fieldDataList;
+  }
+};
+
+/**
+ * arrayPathToValueList - when adding to value list if the value is an array,
+ * this will create the path for each array value, then append it to the fieldDataList.
+ *
+ * @template T
+ * @param {FieldDataObjList[]} fieldDataList
+ * @param {string} path
+ * @param {T} value
+ */
+export const arrayPathToValueList = <T extends FieldValues>(
+  fieldDataList: FieldDataObjList[],
+  path: string,
+  valueArray: T,
+  hasJs: boolean,
+) => {
+  for (const index in valueArray) {
+    const keyPath = `${path}.[${index}]`;
+    const value = valueArray[index];
+
+    if (isBlob(value)) {
+      const blobValue = value as Blob;
+      fieldDataList.push({ path: keyPath, value: blobValue });
+      continue;
+    }
+
+    if (typeof value === "object" && !isEmptyObj(value)) {
+      createPathDataList(value, hasJs, keyPath, fieldDataList);
+      continue;
+    }
+
+    fieldDataList.push({
+      path: keyPath,
+      value: cleanValue(hasJs, value),
+    });
+  }
+};
+
+/**
+ * isBlob returns true if value is a Blob
+ *
+ * @param {*} value
+ * @returns {boolean}
+ */
+export const isBlob = (value: any) => {
+  if (!Blob) return false;
+
+  return value instanceof Blob || toString.call(value) === "[object Blob]";
+};
+
+/**
+ * Clean Value returns a Blob or a JSON.stringify() string if hasJS is set.
+ *
+ * @param {*} value
+ * @returns {string | Blob}
+ */
+export const cleanValue = (hasJs: boolean, value: any): string | Blob => {
+  if (isBlob(value)) return value;
+
+  if (hasJs || typeof value !== "string") {
+    return JSON.stringify(value);
+  }
+
+  return value;
 };

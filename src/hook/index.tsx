@@ -1,16 +1,7 @@
 import React from "react";
-import {
-  FetcherWithComponents,
-  SubmitFunction,
-  useActionData,
-  useSubmit,
-  useNavigation,
-} from "@remix-run/react";
-import {
-  SubmitErrorHandler,
-  SubmitHandler,
-  useFormContext,
-} from "react-hook-form";
+import type { FetcherWithComponents, SubmitFunction } from "@remix-run/react";
+import { useActionData, useSubmit, useNavigation } from "@remix-run/react";
+import { useFormContext } from "react-hook-form";
 import { useForm, FormProvider } from "react-hook-form";
 import type {
   FieldValues,
@@ -19,6 +10,8 @@ import type {
   UseFormHandleSubmit,
   UseFormProps,
   UseFormReturn,
+  SubmitErrorHandler,
+  SubmitHandler,
 } from "react-hook-form";
 import { createFormData, mergeErrors, safeKeys } from "../utilities";
 
@@ -124,12 +117,14 @@ export const useRemixForm = <T extends FieldValues>({
     },
   };
 };
+
 interface RemixFormProviderProps<T extends FieldValues>
   extends Omit<UseFormReturn<T>, "handleSubmit"> {
   children: React.ReactNode;
   handleSubmit: any;
   register: any;
 }
+
 export const RemixFormProvider = <T extends FieldValues>({
   children,
   ...props
