@@ -1,4 +1,3 @@
-import { object } from "zod";
 import {
   type FieldValues,
   type Resolver,
@@ -319,13 +318,14 @@ export const isEmptyObj = (obj: any) => {
  *
  * @template T
  * @param {T} formData
+ * @param {?boolean} [hasJs]
  * @param {?string} [pathKey]
  * @param {?FieldDataObjList[]} [fieldDataList]
  * @returns {(FieldDataObjList[] | undefined)}
  */
 export const createPathDataList = <T extends FieldValues>(
   fieldValues: T,
-  hasJs: boolean,
+  hasJs: boolean | undefined = false,
   pathKey?: string,
   fieldDataList?: FieldDataObjList[],
 ): FieldDataObjList[] | undefined => {
@@ -376,6 +376,7 @@ export const createPathDataList = <T extends FieldValues>(
  * @template T
  * @param {FieldDataObjList[]} fieldDataList
  * @param {string} path
+ * @param {T extends FieldValues} valueArray
  * @param {T} value
  */
 export const arrayPathToValueList = <T extends FieldValues>(
