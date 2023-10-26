@@ -1,4 +1,4 @@
-import { array, object, string } from "zod";
+import { array, boolean, number, object, string } from "zod";
 import {
   createFormData,
   generateFormData,
@@ -17,29 +17,30 @@ describe("createFormData", () => {
     const data = {
       name: "John Doe",
       age: 30,
+      bool: true,
+      object: {
+        test: "1",
+        number: 2,
+      },
+      array: ["1", "2", "3"],
     };
     const formData = createFormData(data);
-    expect(formData.get("formData")).toEqual(JSON.stringify(data));
-  });
 
-  it("should create a FormData object with the provided key and data", () => {
-    const data = {
-      name: "Jane Doe",
-      age: 25,
-    };
-    const key = "myData";
-    const formData = createFormData(data, key);
-    expect(formData.get(key)).toEqual(JSON.stringify(data));
-  });
-
-  it("should handle empty data", () => {
-    const formData = createFormData({});
-    expect(formData.get("formData")).toEqual("{}");
+    expect(formData.get("name")).toEqual(data.name);
+    expect(formData.get("age")).toEqual(data.age.toString());
+    expect(formData.get("object")).toEqual(JSON.stringify(data.object));
+    expect(formData.get("array")).toEqual(JSON.stringify(data.array));
+    expect(formData.get("bool")).toEqual(data.bool.toString());
   });
 
   it("should handle null data", () => {
     const formData = createFormData(null as any);
-    expect(formData.get("formData")).toEqual("null");
+    expect(formData).toBeTruthy();
+  });
+
+  it("should handle undefined data", () => {
+    const formData = createFormData(undefined as any);
+    expect(formData).toBeTruthy();
   });
 });
 
@@ -91,7 +92,7 @@ describe("parseFormData", () => {
     const parsedData = await parseFormData(request);
     expect(parsedData).toEqual({
       name: "John Doe",
-      age: "30",
+      age: 30,
       hobbies: ["Reading", "Writing", "Coding"],
       other: {
         skills: ["testing", "testing"],
@@ -100,16 +101,15 @@ describe("parseFormData", () => {
     });
   });
 
-  it("should throw an error if the retrieved data is not a string (but a file instead)", async () => {
+  it("should not throw an error when a file is passed in", async () => {
     const request = new Request("http://localhost:3000");
     const requestFormDataSpy = vi.spyOn(request, "formData");
     const blob = new Blob(["Hello, world!"], { type: "text/plain" });
     const mockFormData = new FormData();
     mockFormData.append("formData", blob);
     requestFormDataSpy.mockResolvedValueOnce(mockFormData);
-    await expect(parseFormData(request)).rejects.toThrowError(
-      "Data is not a string"
-    );
+    const data = await parseFormData<{ formData: any }>(request);
+    expect(data.formData).toBeTypeOf("string");
   });
 });
 
@@ -283,7 +283,7 @@ describe("getFormDataFromSearchParams", () => {
 
     expect(formData).toStrictEqual({
       colors: ["red", "green", "blue"],
-      numbers: ["1", "2", "3"],
+      numbers: [1, 2, 3],
     });
   });
 });
@@ -297,7 +297,7 @@ describe("validateFormData", () => {
 
     const returnData = await validateFormData(
       formData,
-      zodResolver(object({ name: string(), email: string().email() }))
+      zodResolver(object({ name: string(), email: string().email() })),
     );
     expect(returnData.errors).toStrictEqual(undefined);
     expect(returnData.data).toStrictEqual(formData);
@@ -310,7 +310,7 @@ describe("validateFormData", () => {
     };
     const returnData = await validateFormData(
       formData,
-      zodResolver(object({ name: string(), email: string().email() }))
+      zodResolver(object({ name: string(), email: string().email() })),
     );
     expect(returnData.errors).toStrictEqual({
       email: {
@@ -334,11 +334,11 @@ describe("getValidatedFormData", () => {
         name: string(),
       }),
       colors: array(string()),
-      numbers: array(string()),
+      numbers: array(number()),
     });
     const formData = await getValidatedFormData(
       request as any,
-      zodResolver(schema)
+      zodResolver(schema),
     );
     expect(formData).toStrictEqual({
       data: {
@@ -346,14 +346,14 @@ describe("getValidatedFormData", () => {
           name: "john",
         },
         colors: ["red", "green", "blue"],
-        numbers: ["1", "2", "3"],
+        numbers: [1, 2, 3],
       },
       receivedValues: {
         user: {
           name: "john",
         },
         colors: ["red", "green", "blue"],
-        numbers: ["1", "2", "3"],
+        numbers: [1, 2, 3],
       },
       errors: undefined,
     });
@@ -362,22 +362,25 @@ describe("getValidatedFormData", () => {
   it("gets valid form data from a POST request when it is js", async () => {
     const formData = {
       name: "John Doe",
-      age: "30",
+      age: 30,
       hobbies: ["Reading", "Writing", "Coding"],
+      boolean: true,
+      numbers: [1, 2, 3],
       other: {
         skills: ["testing", "testing"],
         something: "else",
       },
     };
-    const request = new Request("http://localhost:3000");
+    const request = new Request("http://localhost:3000", { method: "POST" });
     const requestFormDataSpy = vi.spyOn(request, "formData");
-    const data = new FormData();
-    data.append("formData", JSON.stringify(formData));
+    const data = createFormData(formData);
     requestFormDataSpy.mockResolvedValueOnce(data);
 
     const schema = object({
       name: string(),
-      age: string(),
+      age: number(),
+      boolean: boolean(),
+      numbers: array(number()),
       hobbies: array(string()),
       other: object({
         skills: array(string()),
@@ -386,7 +389,7 @@ describe("getValidatedFormData", () => {
     });
     const validatedFormData = await getValidatedFormData(
       request as any,
-      zodResolver(schema)
+      zodResolver(schema),
     );
     expect(validatedFormData).toStrictEqual({
       data: formData,
@@ -405,13 +408,13 @@ describe("getValidatedFormData", () => {
     formData.append("other.skills.0", "testing");
     formData.append("other.skills.1", "testing");
     formData.append("other.something", "else");
-    const request = new Request("http://localhost:3000");
+    const request = new Request("http://localhost:3000", { method: "POST" });
     const requestFormDataSpy = vi.spyOn(request, "formData");
     requestFormDataSpy.mockResolvedValueOnce(formData);
 
     const schema = object({
       name: string(),
-      age: string(),
+      age: number(),
       hobbies: array(string()),
       other: object({
         skills: array(string()),
@@ -420,12 +423,12 @@ describe("getValidatedFormData", () => {
     });
     const returnData = await getValidatedFormData(
       request as any,
-      zodResolver(schema)
+      zodResolver(schema),
     );
     expect(returnData).toStrictEqual({
       data: {
         name: "John Doe",
-        age: "30",
+        age: 30,
         hobbies: ["Reading", "Writing", "Coding"],
         other: {
           skills: ["testing", "testing"],
@@ -434,7 +437,7 @@ describe("getValidatedFormData", () => {
       },
       receivedValues: {
         name: "John Doe",
-        age: "30",
+        age: 30,
         hobbies: ["Reading", "Writing", "Coding"],
         other: {
           skills: ["testing", "testing"],

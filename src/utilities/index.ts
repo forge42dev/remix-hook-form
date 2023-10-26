@@ -1,4 +1,4 @@
-import {
+import type {
   FieldValues,
   Resolver,
   FieldErrors,
@@ -6,19 +6,34 @@ import {
   DeepRequired,
 } from "react-hook-form";
 
+const tryParseJSON = (jsonString: string) => {
+  try {
+    const json = JSON.parse(jsonString);
+    return json;
+  } catch (e) {
+    return jsonString;
+  }
+};
+
 /**
  * Generates an output object from the given form data, where the keys in the output object retain
  * the structure of the keys in the form data. Keys containing integer indexes are treated as arrays.
  *
  * @param {FormData} formData - The form data to generate an output object from.
+ * @param {boolean} [preserveStringified=false] - Whether to preserve stringified values or try to convert them
  * @returns {Object} The output object generated from the form data.
  */
-export const generateFormData = (formData: FormData) => {
+export const generateFormData = (
+  formData: FormData,
+  preserveStringified = false,
+) => {
   // Initialize an empty output object.
   const outputObject: Record<any, any> = {};
 
   // Iterate through each key-value pair in the form data.
   for (const [key, value] of formData.entries()) {
+    // Try to convert data to the original type, otherwise return the original value
+    const data = preserveStringified ? value : tryParseJSON(value.toString());
     // Split the key into an array of parts.
     const keyParts = key.split(".");
     // Initialize a variable to point to the current object in the output object.
@@ -47,18 +62,19 @@ export const generateFormData = (formData: FormData) => {
       if (!currentObject[key]) {
         currentObject[key] = [];
       }
-      currentObject[key].push(value);
+
+      currentObject[key].push(data);
     }
 
     // Handles array.foo.0 cases
     if (!lastKeyPartIsArray) {
       // If the last key part is a valid integer index, push the value to the current array.
       if (/^\d+$/.test(lastKeyPart)) {
-        currentObject.push(value);
+        currentObject.push(data);
       }
       // Otherwise, set a property on the current object with the last key part and the corresponding value.
       else {
-        currentObject[lastKeyPart] = value;
+        currentObject[lastKeyPart] = data;
       }
     }
   }
@@ -67,9 +83,12 @@ export const generateFormData = (formData: FormData) => {
   return outputObject;
 };
 
-export const getFormDataFromSearchParams = (request: Pick<Request, "url">) => {
+export const getFormDataFromSearchParams = (
+  request: Pick<Request, "url">,
+  preserveStringified = false,
+) => {
   const searchParams = new URL(request.url).searchParams;
-  return generateFormData(searchParams as any);
+  return generateFormData(searchParams as any, preserveStringified);
 };
 
 export const isGet = (request: Pick<Request, "method">) =>
@@ -86,11 +105,12 @@ export const isGet = (request: Pick<Request, "method">) =>
  */
 export const getValidatedFormData = async <T extends FieldValues>(
   request: Request,
-  resolver: Resolver
+  resolver: Resolver,
 ) => {
   const data = isGet(request)
     ? getFormDataFromSearchParams(request)
     : await parseFormData<T>(request);
+
   const validatedOutput = await validateFormData<T>(data, resolver);
   return { ...validatedOutput, receivedValues: data };
 };
@@ -103,12 +123,12 @@ export const getValidatedFormData = async <T extends FieldValues>(
  */
 export const validateFormData = async <T extends FieldValues>(
   data: any,
-  resolver: Resolver
+  resolver: Resolver,
 ) => {
   const { errors, values } = await resolver(
     data,
     {},
-    { shouldUseNativeValidation: false, fields: {} }
+    { shouldUseNativeValidation: false, fields: {} },
   );
 
   if (Object.keys(errors).length > 0) {
@@ -124,42 +144,46 @@ export const validateFormData = async <T extends FieldValues>(
   @param {string} [key="formData"] - The key to be used for adding the data to the FormData.
   @returns {FormData} - The FormData object with the data added to it.
 */
-export const createFormData = <T extends FieldValues>(
-  data: T,
-  key = "formData"
-): FormData => {
+export const createFormData = <T extends FieldValues>(data: T): FormData => {
   const formData = new FormData();
-  const finalData = JSON.stringify(data);
-  formData.append(key, finalData);
+  if (!data) {
+    return formData;
+  }
+  Object.entries(data).map(([key, value]) => {
+    if (Array.isArray(value)) {
+      formData.append(key, JSON.stringify(value));
+    } else if (value instanceof File) {
+      formData.append(key, value);
+    } else if (typeof value === "object" && value !== null) {
+      formData.append(key, JSON.stringify(value));
+    } else if (typeof value === "boolean") {
+      formData.append(key, value.toString());
+    } else if (typeof value === "number") {
+      formData.append(key, value.toString());
+    } else {
+      formData.append(key, value);
+    }
+  });
+
   return formData;
 };
+
 /**
 Parses the specified Request object's FormData to retrieve the data associated with the specified key.
 @template T - The type of the data to be returned.
 @param {Request} request - The Request object whose FormData is to be parsed.
-@param {string} [key="formData"] - The key of the data to be retrieved from the FormData.
+@param {boolean} [preserveStringified=false] - Whether to preserve stringified values or try to convert them
 @returns {Promise<T>} - A promise that resolves to the data of type T.
 @throws {Error} - If no data is found for the specified key, or if the retrieved data is not a string.
 */
 export const parseFormData = async <T extends any>(
   request: Request,
-  key = "formData"
+  preserveStringified = false,
 ): Promise<T> => {
   const formData = await request.formData();
-  const data = formData.get(key);
-
-  if (!data) {
-    return generateFormData(formData);
-  }
-
-  if (!(typeof data === "string")) {
-    throw new Error("Data is not a string");
-  }
-
-  return JSON.parse(data);
+  return generateFormData(formData, preserveStringified);
 };
 /**
-
 Merges two error objects generated by a resolver, where T is the generic type of the object.
 The function recursively merges the objects and returns the resulting object.
 @template T - The generic type of the object.
@@ -171,7 +195,7 @@ export const mergeErrors = <T extends FieldValues>(
   frontendErrors: Partial<FieldErrorsImpl<DeepRequired<T>>>,
   backendErrors?: Partial<FieldErrorsImpl<DeepRequired<T>>>,
   validKeys: string[] = [],
-  depth = 0
+  depth = 0,
 ) => {
   if (!backendErrors) {
     return frontendErrors;
@@ -179,7 +203,7 @@ export const mergeErrors = <T extends FieldValues>(
 
   for (const [key, rightValue] of Object.entries(backendErrors) as [
     keyof T,
-    DeepRequired<T>[keyof T]
+    DeepRequired<T>[keyof T],
   ][]) {
     if (
       !validKeys.includes(key.toString()) &&
