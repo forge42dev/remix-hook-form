@@ -158,7 +158,7 @@ export const action = async ({ request }: ActionArgs) => {
 
 ### createFormData
 
-createFormData is a utility function that can be used to create a FormData object from the data returned by the handleSubmit function from `react-hook-form`. It takes two arguments, first one is the `data` from the `handleSubmit` function and the second one is the key that the data will be stored in the FormData object. (default is `formData`). It returns a FormData object.
+createFormData is a utility function that can be used to create a FormData object from the data returned by the handleSubmit function from `react-hook-form`. It takes one argument, the `data` from the `handleSubmit` function and it converts everything it can to strings and appends files as well. It returns a FormData object.
 
 ```jsx
 /** all the same code from above */
@@ -168,10 +168,8 @@ export default function MyForm() {
     ...,
     submitHandlers: {
       onValid: data => {
-        // This will create a FormData instance ready to be sent to the server, by default all your data is stored inside a key called `formData` but this behavior can be changed by passing a second argument to the function
-        const formData = createFormData(data);
-        // Example with a custom key
-        const formDataCustom = createFormData(data, "yourkeyhere");
+        // This will create a FormData instance ready to be sent to the server, by default all your data is converted to a string before sent
+        const formData = createFormData(data); 
         // Do something with the formData
       }
     }
@@ -186,7 +184,7 @@ export default function MyForm() {
 
 ### parseFormData
 
-parseFormData is a utility function that can be used to parse the data submitted to the action by the handleSubmit function from `react-hook-form`. It takes two arguments, first one is the `request` submitted from the frontend and the second one is the key that the data will be stored in the FormData object. (default is `formData`). It returns an object that contains unvalidated `data` submitted from the frontend.
+parseFormData is a utility function that can be used to parse the data submitted to the action by the handleSubmit function from `react-hook-form`. It takes two arguments, first one is the `request` submitted from the frontend and the second one is `preserveStringified`, the form data you submit will be cast to strings because that is how form data works, when retrieving it you can either keep everything as strings or let the helper try to parse it back to original types (eg number to string), default is `false`. It returns an object that contains unvalidated `data` submitted from the frontend.
 
 
 ```jsx
@@ -195,8 +193,9 @@ parseFormData is a utility function that can be used to parse the data submitted
 export const action = async ({ request }: ActionArgs) => {
   // Allows you to get the data from the request object without having to validate it
   const formData = await parseFormData(request);
-  // If you used a custom key (eg. `yourkeyhere` from above you can extract like this)
-  const formDataCustom = await parseFormData(request, "yourkeyhere");
+  // formData.age will be a number
+  const formDataStringified = await parseFormData(request, true);
+  // formDataStringified.age will be a string
   // Do something with the data
 };
 

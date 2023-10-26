@@ -13,6 +13,7 @@ import {
 } from "react-hook-form";
 import { useForm, FormProvider } from "react-hook-form";
 import type {
+  DeepPartial,
   FieldValues,
   Path,
   RegisterOptions,
@@ -42,6 +43,8 @@ export const useRemixForm = <T extends FieldValues>({
   fetcher,
   ...formProps
 }: UseRemixFormOptions<T>) => {
+  const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] =
+    React.useState(false);
   const actionSubmit = useSubmit();
   const actionData = useActionData();
   const submit = fetcher?.submit ?? actionSubmit;
@@ -54,7 +57,9 @@ export const useRemixForm = <T extends FieldValues>({
 
   // Submits the data to the server when form is valid
   const onSubmit = (data: T) => {
-    submit(createFormData({ ...data, ...submitData }), {
+    setIsSubmittedSuccessfully(true);
+    const formData = createFormData({ ...data, ...submitData });
+    submit(formData, {
       method: "post",
       ...submitConfig,
     });
@@ -92,6 +97,10 @@ export const useRemixForm = <T extends FieldValues>({
       submitHandlers?.onValid ?? onSubmit,
       submitHandlers?.onInvalid ?? onInvalid,
     ),
+    reset: (values?: T | DeepPartial<T> | undefined) => {
+      setIsSubmittedSuccessfully(false);
+      methods.reset(values);
+    },
     register: (
       name: Path<T>,
       options?: RegisterOptions<T> & {
@@ -106,7 +115,7 @@ export const useRemixForm = <T extends FieldValues>({
     formState: {
       dirtyFields,
       isDirty,
-      isSubmitSuccessful,
+      isSubmitSuccessful: isSubmittedSuccessfully || isSubmitSuccessful,
       isSubmitted,
       isSubmitting: isSubmittingForm || isSubmitting,
       isValid,

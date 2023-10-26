@@ -68,6 +68,25 @@ describe("useRemixForm", () => {
     });
   });
 
+  it("should reset isSubmitSuccessful after submission if reset is called", async () => {
+    const { result } = renderHook(() =>
+      useRemixForm({
+        resolver: () => ({ values: {}, errors: {} }),
+      }),
+    );
+
+    act(() => {
+      result.current.handleSubmit();
+    });
+    await waitFor(() => {
+      expect(result.current.formState.isSubmitSuccessful).toBe(true);
+    });
+    act(() => {
+      result.current.reset();
+    });
+    expect(result.current.formState.isSubmitSuccessful).toBe(false);
+  });
+
   it("should submit the form data to the server when the form is valid", async () => {
     const { result } = renderHook(() =>
       useRemixForm({
