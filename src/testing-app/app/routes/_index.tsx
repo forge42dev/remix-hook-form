@@ -23,10 +23,10 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 const FormDataZodSchema = z.object({
-  action: z.string(),
-  outline: z.string().min(2, {
-    message: "Outline must be at least 2 characters.",
-  }),
+  email: z.string().trim().nonempty("validation.required"),
+  password: z.string().trim().nonempty("validation.required"),
+  number: z.number({ coerce: true }).int().positive(),
+  redirectTo: z.string().optional(),
 });
 
 type FormData = z.infer<typeof FormDataZodSchema>;
@@ -34,25 +34,17 @@ type FormData = z.infer<typeof FormDataZodSchema>;
 const resolver = zodResolver(FormDataZodSchema);
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData();
-
-  if (formData.get("action") === "accept") {
-    console.log("formData", Object.fromEntries(formData));
-
-    const { data, errors } = await validateFormData<FormData>(
-      formData,
-      resolver,
-    );
-
-    console.log("errors", errors);
-
-    if (errors) {
-      return json(errors);
-    }
-
-    console.log(data);
-    return null;
+  const { data, errors, receivedValues } = await getValidatedFormData(
+    request,
+    resolver,
+  );
+  console.log("action", data, errors, receivedValues);
+  if (errors) {
+    return json(errors, {
+      status: 422,
+    });
   }
+  return json({ result: "success" });
 };
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
@@ -65,7 +57,10 @@ export default function Index() {
   const methods = useRemixForm<FormData>({
     resolver,
     defaultValues: {
-      action: "accept",
+      email: "t.zlak97@gmail.com",
+      password: "12345678",
+      redirectTo: undefined,
+      number: 1,
     },
     submitConfig: {
       method: "POST",
@@ -80,8 +75,9 @@ export default function Index() {
 
       <Form method="post" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-2">
-          <input type="text" {...register("action")} />
-          <input type="text" {...register("outline")} />
+          <input type="text" {...register("email")} />
+          <input type="text" {...register("password")} />
+          <input type="number" {...register("number")} />
         </div>
         <div>
           <button type="submit" className="button">

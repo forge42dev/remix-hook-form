@@ -7,9 +7,18 @@ import type {
 } from "react-hook-form";
 
 const tryParseJSON = (jsonString: string) => {
+  if (jsonString === "null") {
+    return null;
+  }
+  if (jsonString === "undefined") {
+    return undefined;
+  }
   try {
     const json = JSON.parse(jsonString);
-    return json;
+    if (typeof json === "object") {
+      return json;
+    }
+    return jsonString;
   } catch (e) {
     return jsonString;
   }
