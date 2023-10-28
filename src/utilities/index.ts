@@ -15,7 +15,11 @@ const tryParseJSON = (jsonString: string) => {
   }
   try {
     const json = JSON.parse(jsonString);
-    if (typeof json === "object") {
+    if (
+      typeof json === "object" ||
+      typeof json === "boolean" ||
+      typeof json === "string"
+    ) {
       return json;
     }
     return jsonString;
