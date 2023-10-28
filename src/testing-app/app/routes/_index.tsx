@@ -11,6 +11,8 @@ import {
   useRemixForm,
   parseFormData,
   getFormDataFromSearchParams,
+  validateFormData,
+  RemixFormProvider,
 } from "remix-hook-form";
 import { z } from "zod";
 const MAX_FILE_SIZE = 500000;
@@ -20,44 +22,37 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/png",
   "image/webp",
 ];
-const schema = z.object({
-  array: z.array(z.string()).nonempty(),
-  user: z.object({
-    name: z.string().nonempty(),
-    email: z.string().email(),
+const FormDataZodSchema = z.object({
+  action: z.string(),
+  outline: z.string().min(2, {
+    message: "Outline must be at least 2 characters.",
   }),
-  boolean: z.boolean(),
-  number: z.number().min(5),
-
-  // file: z
-  //    .any()
-  //   .refine((files) => files?.length == 1, "Image is required.")
-  //   .refine(
-  //     (files) => files?.[0]?.size <= MAX_FILE_SIZE,
-  //      `Max file size is 5MB.`,
-  //   )
-  //   .refine(
-  //     (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-  //     ".jpg, .jpeg, .png and .webp files are accepted.",
-  //   )
-  //   .nullish(),
 });
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.infer<typeof FormDataZodSchema>;
 
-const resolver = zodResolver(schema);
+const resolver = zodResolver(FormDataZodSchema);
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const data = await getValidatedFormData<FormData>(request, resolver);
-  console.log("action", data);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  return null;
-  // Make DB call or similar here.
-  //return json({ errors: { content: { message: "error" } } });
-  return {
-    result: "success",
-    transformed: `This was your content: ${JSON.stringify(data)}`,
-  };
+  const formData = await request.formData();
+
+  if (formData.get("action") === "accept") {
+    console.log("formData", Object.fromEntries(formData));
+
+    const { data, errors } = await validateFormData<FormData>(
+      formData,
+      resolver,
+    );
+
+    console.log("errors", errors);
+
+    if (errors) {
+      return json(errors);
+    }
+
+    console.log(data);
+    return null;
+  }
 };
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
@@ -67,36 +62,26 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Index() {
-  const { register, handleSubmit, formState, watch, reset } =
-    useRemixForm<FormData>({
-      resolver,
-      defaultValues: {
-        array: ["a", "b"],
-        boolean: true,
-        number: 6,
-        user: {
-          name: "John Doe",
-          email: "test@test.com",
-        },
-      },
-      submitConfig: {
-        method: "POST",
-      },
-    });
+  const methods = useRemixForm<FormData>({
+    resolver,
+    defaultValues: {
+      action: "accept",
+    },
+    submitConfig: {
+      method: "POST",
+    },
+  });
+  const { register, handleSubmit, formState, watch, reset } = methods;
+  console.log(formState);
 
   return (
-    <div>
+    <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
 
       <Form method="post" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-2">
-          <input type="number" {...register("number")} />
-          <input type="boolean" {...register("boolean")} />
-
-          <input type="string" {...register("user.name")} />
-          <input type="string" {...register("user.email")} />
-          <input type="string" {...register("array.0")} />
-          <input type="string" {...register("array.1")} />
+          <input type="text" {...register("action")} />
+          <input type="text" {...register("outline")} />
         </div>
         <div>
           <button type="submit" className="button">
@@ -104,6 +89,6 @@ export default function Index() {
           </button>
         </div>
       </Form>
-    </div>
+    </RemixFormProvider>
   );
 }

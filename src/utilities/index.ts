@@ -125,8 +125,10 @@ export const validateFormData = async <T extends FieldValues>(
   data: any,
   resolver: Resolver,
 ) => {
+  const dataToValidate =
+    data instanceof FormData ? Object.fromEntries(data) : data;
   const { errors, values } = await resolver(
-    data,
+    dataToValidate,
     {},
     { shouldUseNativeValidation: false, fields: {} },
   );

@@ -128,10 +128,11 @@ export const useRemixForm = <T extends FieldValues>({
   };
 };
 interface RemixFormProviderProps<T extends FieldValues>
-  extends Omit<UseFormReturn<T>, "handleSubmit"> {
+  extends Omit<UseFormReturn<T>, "handleSubmit" | "reset"> {
   children: React.ReactNode;
   handleSubmit: any;
   register: any;
+  reset: any;
 }
 export const RemixFormProvider = <T extends FieldValues>({
   children,
