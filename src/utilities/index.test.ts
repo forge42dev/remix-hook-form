@@ -1,4 +1,4 @@
-import { array, boolean, number, object, string } from "zod";
+import { array, boolean, object, string } from "zod";
 import {
   createFormData,
   generateFormData,
@@ -59,7 +59,7 @@ describe("parseFormData", () => {
   it("should parse the data from the request object", async () => {
     const data = {
       name: "John Doe",
-      age: 30,
+      age: "30",
     };
     const request = new Request("http://localhost:3000");
     const requestFormDataSpy = vi.spyOn(request, "formData");
@@ -92,7 +92,7 @@ describe("parseFormData", () => {
     const parsedData = await parseFormData(request);
     expect(parsedData).toEqual({
       name: "John Doe",
-      age: 30,
+      age: "30",
       hobbies: ["Reading", "Writing", "Coding"],
       other: {
         skills: ["testing", "testing"],
@@ -283,7 +283,7 @@ describe("getFormDataFromSearchParams", () => {
 
     expect(formData).toStrictEqual({
       colors: ["red", "green", "blue"],
-      numbers: [1, 2, 3],
+      numbers: ["1", "2", "3"],
     });
   });
 });
@@ -334,7 +334,7 @@ describe("getValidatedFormData", () => {
         name: string(),
       }),
       colors: array(string()),
-      numbers: array(number()),
+      numbers: array(string()),
     });
     const formData = await getValidatedFormData(
       request as any,
@@ -346,14 +346,14 @@ describe("getValidatedFormData", () => {
           name: "john",
         },
         colors: ["red", "green", "blue"],
-        numbers: [1, 2, 3],
+        numbers: ["1", "2", "3"],
       },
       receivedValues: {
         user: {
           name: "john",
         },
         colors: ["red", "green", "blue"],
-        numbers: [1, 2, 3],
+        numbers: ["1", "2", "3"],
       },
       errors: undefined,
     });
@@ -362,10 +362,10 @@ describe("getValidatedFormData", () => {
   it("gets valid form data from a POST request when it is js", async () => {
     const formData = {
       name: "John Doe",
-      age: 30,
+      age: "30",
       hobbies: ["Reading", "Writing", "Coding"],
       boolean: true,
-      numbers: [1, 2, 3],
+      numbers: ["1", "2", "3"],
       other: {
         skills: ["testing", "testing"],
         something: "else",
@@ -378,9 +378,9 @@ describe("getValidatedFormData", () => {
 
     const schema = object({
       name: string(),
-      age: number(),
+      age: string(),
       boolean: boolean(),
-      numbers: array(number()),
+      numbers: array(string()),
       hobbies: array(string()),
       other: object({
         skills: array(string()),
@@ -414,7 +414,7 @@ describe("getValidatedFormData", () => {
 
     const schema = object({
       name: string(),
-      age: number(),
+      age: string(),
       hobbies: array(string()),
       other: object({
         skills: array(string()),
@@ -428,7 +428,7 @@ describe("getValidatedFormData", () => {
     expect(returnData).toStrictEqual({
       data: {
         name: "John Doe",
-        age: 30,
+        age: "30",
         hobbies: ["Reading", "Writing", "Coding"],
         other: {
           skills: ["testing", "testing"],
@@ -437,7 +437,7 @@ describe("getValidatedFormData", () => {
       },
       receivedValues: {
         name: "John Doe",
-        age: 30,
+        age: "30",
         hobbies: ["Reading", "Writing", "Coding"],
         other: {
           skills: ["testing", "testing"],

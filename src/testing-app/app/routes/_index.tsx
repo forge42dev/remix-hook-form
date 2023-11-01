@@ -59,7 +59,11 @@ const FormDataZodSchema = z.object({
 type FormData = z.infer<typeof patientBaseSchema>;
 
 const resolver = zodResolver(patientBaseSchema);
-
+export const loader = ({ request }: LoaderFunctionArgs) => {
+  const data = getFormDataFromSearchParams(request);
+  console.log("loader", data);
+  return json({ result: "success" });
+};
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { data, errors, receivedValues } = await getValidatedFormData(
     request,
@@ -71,12 +75,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       status: 422,
     });
   }
-  return json({ result: "success" });
-};
-
-export const loader = ({ request }: LoaderFunctionArgs) => {
-  const data = getFormDataFromSearchParams(request);
-  console.log("loader", data);
   return json({ result: "success" });
 };
 
