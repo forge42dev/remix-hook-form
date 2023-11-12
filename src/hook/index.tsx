@@ -64,8 +64,8 @@ export const useRemixForm = <T extends FieldValues>({
   const {
     dirtyFields,
     isDirty,
-    isSubmitSuccessful,
     isSubmitting,
+    isSubmitted,
     isValidating,
     touchedFields,
     submitCount,
@@ -79,9 +79,8 @@ export const useRemixForm = <T extends FieldValues>({
     validKeys,
   );
 
-  const isValid = !(Object.keys(errors).length > 0);
-  const isSubmitted =
-    data && Object.keys(data).length > 0 && isValid ? true : false;
+  const isValid = Object.keys(formErrors.errors ?? {}).length < 1;
+  const isSubmitSuccessful = Object.keys(data ?? {}).length > 0 && isValid;
 
   return {
     ...methods,
