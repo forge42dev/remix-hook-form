@@ -1,6 +1,6 @@
 {
   "name": "remix-hook-form",
-  "version": "3.0.4",
+  "version": "3.1.0",
   "description": "Utility wrapper around react-hook-form for use with Remix.run",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -68,7 +68,7 @@
     "@remix-run/react": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hook-form": "^7.43.9"
+    "react-hook-form": "^7.48.2"
   },
   "readme": "https://github.com/Code-Forge-Net/remix-hook-form#readme",
   "devDependencies": {
@@ -87,7 +87,7 @@
     "prettier": "^3.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hook-form": "^7.43.9",
+    "react-hook-form": "^7.48.2",
     "remix-development-tools": "^3.1.1",
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
