@@ -31,6 +31,7 @@ describe("useRemixForm", () => {
     expect(result.current.clearErrors).toBeInstanceOf(Function);
     expect(result.current.setError).toBeInstanceOf(Function);
     expect(result.current.formState).toEqual({
+      disabled: false,
       dirtyFields: {},
       isDirty: false,
       isSubmitSuccessful: false,
