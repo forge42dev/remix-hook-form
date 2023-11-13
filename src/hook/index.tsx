@@ -13,7 +13,7 @@ import {
 } from "react-hook-form";
 import { useForm, FormProvider } from "react-hook-form";
 import type {
-  DeepPartial,
+  DefaultValues,
   FieldValues,
   Path,
   RegisterOptions,
@@ -83,6 +83,7 @@ export const useRemixForm = <T extends FieldValues>({
     submitCount,
     errors,
     isLoading,
+    disabled,
   } = formState;
 
   const formErrors = mergeErrors<T>(
@@ -97,7 +98,7 @@ export const useRemixForm = <T extends FieldValues>({
       submitHandlers?.onValid ?? onSubmit,
       submitHandlers?.onInvalid ?? onInvalid,
     ),
-    reset: (values?: T | DeepPartial<T> | undefined) => {
+    reset: (values?: T | DefaultValues<T> | undefined) => {
       setIsSubmittedSuccessfully(false);
       methods.reset(values);
     },
@@ -113,6 +114,7 @@ export const useRemixForm = <T extends FieldValues>({
       }),
     }),
     formState: {
+      disabled,
       dirtyFields,
       isDirty,
       isSubmitSuccessful: isSubmittedSuccessfully || isSubmitSuccessful,
