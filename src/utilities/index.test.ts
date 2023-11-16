@@ -1,4 +1,4 @@
-import { array, boolean, object, string } from "zod";
+import { array, boolean, number, object, string } from "zod";
 import {
   createFormData,
   generateFormData,
@@ -22,11 +22,11 @@ describe("createFormData", () => {
         test: "1",
         number: 2,
       },
-      array: ["1", "2", "3"],
+      array: [1, 2, 3],
     };
     const formData = createFormData(data);
 
-    expect(formData.get("name")).toEqual(data.name);
+    expect(formData.get("name")).toEqual(JSON.stringify(data.name));
     expect(formData.get("age")).toEqual(data.age.toString());
     expect(formData.get("object")).toEqual(JSON.stringify(data.object));
     expect(formData.get("array")).toEqual(JSON.stringify(data.array));
@@ -92,7 +92,7 @@ describe("parseFormData", () => {
     const parsedData = await parseFormData(request);
     expect(parsedData).toEqual({
       name: "John Doe",
-      age: "30",
+      age: 30,
       hobbies: ["Reading", "Writing", "Coding"],
       other: {
         skills: ["testing", "testing"],
@@ -283,7 +283,7 @@ describe("getFormDataFromSearchParams", () => {
 
     expect(formData).toStrictEqual({
       colors: ["red", "green", "blue"],
-      numbers: ["1", "2", "3"],
+      numbers: [1, 2, 3],
     });
   });
 });
@@ -323,6 +323,39 @@ describe("validateFormData", () => {
   });
 });
 
+describe("createFormData", () => {
+  it("doesn't mess up types when passed from frontend to backend", async () => {
+    const formData = createFormData({
+      name: "123",
+      age: 30,
+      hobbies: ["Reading", "Writing", "Coding"],
+      boolean: true,
+      numbers: [1, 2, 3],
+      other: {
+        skills: ["testing", "testing"],
+        something: "else",
+      },
+    });
+    const request = new Request("http://localhost:3000", { method: "POST" });
+    const requestFormDataSpy = vi.spyOn(request, "formData");
+
+    requestFormDataSpy.mockResolvedValueOnce(formData);
+    const parsed = await parseFormData<typeof formData>(request);
+
+    expect(parsed).toStrictEqual({
+      name: "123",
+      age: 30,
+      hobbies: ["Reading", "Writing", "Coding"],
+      boolean: true,
+      numbers: [1, 2, 3],
+      other: {
+        skills: ["testing", "testing"],
+        something: "else",
+      },
+    });
+  });
+});
+
 describe("getValidatedFormData", () => {
   it("gets valid form data from a GET request", async () => {
     const request = {
@@ -334,7 +367,7 @@ describe("getValidatedFormData", () => {
         name: string(),
       }),
       colors: array(string()),
-      numbers: array(string()),
+      numbers: array(number()),
     });
     const formData = await getValidatedFormData(
       request as any,
@@ -346,14 +379,14 @@ describe("getValidatedFormData", () => {
           name: "john",
         },
         colors: ["red", "green", "blue"],
-        numbers: ["1", "2", "3"],
+        numbers: [1, 2, 3],
       },
       receivedValues: {
         user: {
           name: "john",
         },
         colors: ["red", "green", "blue"],
-        numbers: ["1", "2", "3"],
+        numbers: [1, 2, 3],
       },
       errors: undefined,
     });
@@ -362,10 +395,10 @@ describe("getValidatedFormData", () => {
   it("gets valid form data from a POST request when it is js", async () => {
     const formData = {
       name: "John Doe",
-      age: "30",
+      age: 30,
       hobbies: ["Reading", "Writing", "Coding"],
       boolean: true,
-      numbers: ["1", "2", "3"],
+      numbers: [1, 2, 3],
       other: {
         skills: ["testing", "testing"],
         something: "else",
@@ -378,9 +411,9 @@ describe("getValidatedFormData", () => {
 
     const schema = object({
       name: string(),
-      age: string(),
+      age: number(),
       boolean: boolean(),
-      numbers: array(string()),
+      numbers: array(number()),
       hobbies: array(string()),
       other: object({
         skills: array(string()),
@@ -414,7 +447,7 @@ describe("getValidatedFormData", () => {
 
     const schema = object({
       name: string(),
-      age: string(),
+      age: number(),
       hobbies: array(string()),
       other: object({
         skills: array(string()),
@@ -428,7 +461,7 @@ describe("getValidatedFormData", () => {
     expect(returnData).toStrictEqual({
       data: {
         name: "John Doe",
-        age: "30",
+        age: 30,
         hobbies: ["Reading", "Writing", "Coding"],
         other: {
           skills: ["testing", "testing"],
@@ -437,7 +470,7 @@ describe("getValidatedFormData", () => {
       },
       receivedValues: {
         name: "John Doe",
-        age: "30",
+        age: 30,
         hobbies: ["Reading", "Writing", "Coding"],
         other: {
           skills: ["testing", "testing"],

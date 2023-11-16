@@ -7,22 +7,10 @@ import type {
 } from "react-hook-form";
 
 const tryParseJSON = (jsonString: string) => {
-  if (jsonString === "null") {
-    return null;
-  }
-  if (jsonString === "undefined") {
-    return undefined;
-  }
   try {
     const json = JSON.parse(jsonString);
-    if (
-      typeof json === "object" ||
-      typeof json === "boolean" ||
-      typeof json === "string"
-    ) {
-      return json;
-    }
-    return jsonString;
+
+    return json;
   } catch (e) {
     return jsonString;
   }
@@ -165,19 +153,9 @@ export const createFormData = <T extends FieldValues>(data: T): FormData => {
     return formData;
   }
   Object.entries(data).map(([key, value]) => {
-    if (Array.isArray(value)) {
-      formData.append(key, JSON.stringify(value));
-    } else if (value instanceof File || value instanceof Blob) {
+    if (value instanceof File || value instanceof Blob) {
       formData.append(key, value);
-    } else if (typeof value === "object" && value !== null) {
-      formData.append(key, JSON.stringify(value));
-    } else if (typeof value === "boolean") {
-      formData.append(key, value.toString());
-    } else if (typeof value === "number") {
-      formData.append(key, value.toString());
-    } else {
-      formData.append(key, value);
-    }
+    } else formData.append(key, JSON.stringify(value));
   });
 
   return formData;
