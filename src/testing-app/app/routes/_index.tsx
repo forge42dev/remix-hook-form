@@ -79,8 +79,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Index() {
-  const methods = useRemixForm<FormData>({
+  const fetcher = useFetcher();
+  const methods = useRemixForm({
     resolver,
+    fetcher,
     defaultValues: {
       firstName: "a",
       lastName: "t",
