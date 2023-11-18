@@ -4,6 +4,7 @@ import {
   type ActionFunctionArgs,
   unstable_parseMultipartFormData,
   LoaderFunctionArgs,
+  type UploadHandler,
 } from "@remix-run/node";
 import { Form, useFetcher } from "@remix-run/react";
 import {
@@ -31,23 +32,26 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/png",
   "image/webp",
 ];
+export const fileUploadHandler =
+  (): UploadHandler =>
+  async ({ data, filename }) => {
+    const chunks = [];
+    console.log("udje?", filename);
+    for await (const chunk of data) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+    // If there's no filename, it's a text field and we can return the value directly
+    if (!filename) {
+      const textDecoder = new TextDecoder();
+      return textDecoder.decode(buffer);
+    }
+
+    return new File([buffer], filename, { type: "image/jpeg" });
+  };
+
 export const patientBaseSchema = generateObjectSchema({
-  id: stringOptional(),
-  firstName: stringRequired(),
-  lastName: stringRequired(),
-  primaryCareProvider: stringOptional(),
-  dateOfBirth: dateOfBirthRequired(),
-  email: emailOptional(),
-  hasThirdPartyCoverage: booleanOptional(),
-  isForeignCitizen: booleanOptional(),
-  allergies: z.array(stringRequired()).optional(),
-  healthCardNumber: stringOptional(),
-  hasHealthCardNumber: booleanRequired(),
-  city: stringRequired(),
-  province: stringRequired(),
-  street: stringRequired(),
-  postalCode: stringRequired(),
-  healthCardProvince: stringRequired(),
+  file: z.any().optional(),
 });
 const FormDataZodSchema = z.object({
   email: z.string().trim().nonempty("validation.required"),
@@ -61,15 +65,15 @@ type FormData = z.infer<typeof patientBaseSchema>;
 const resolver = zodResolver(patientBaseSchema);
 export const loader = ({ request }: LoaderFunctionArgs) => {
   const data = getFormDataFromSearchParams(request);
-  console.log("loader", data);
   return json({ result: "success" });
 };
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { data, errors, receivedValues } = await getValidatedFormData(
+  const formData = await unstable_parseMultipartFormData(
     request,
-    resolver,
+    fileUploadHandler(),
   );
-  console.log("action", data, errors, receivedValues);
+  console.log(formData.get("file"));
+  const { errors, data } = await validateFormData(formData, resolver);
   if (errors) {
     return json(errors, {
       status: 422,
@@ -84,39 +88,24 @@ export default function Index() {
     resolver,
     fetcher,
     defaultValues: {
-      firstName: "a",
-      lastName: "t",
-      primaryCareProvider: "",
-      dateOfBirth: new Date("1997-09-05T00:00:00.000Z"),
-
-      email: "",
-
-      hasThirdPartyCoverage: false,
-      isForeignCitizen: false,
-      allergies: [],
-      city: "Sarajevo",
-      street: "Radenka Abazovića",
-      province: "ON",
-      postalCode: "a5t 5a5",
-      hasHealthCardNumber: true,
-      healthCardNumber: "5555555555",
-      healthCardProvince: "ON",
+      file: undefined,
+    },
+    submitData: {
+      test: "test",
     },
     submitConfig: {
       method: "POST",
+      encType: "multipart/form-data",
     },
   });
   const { register, handleSubmit, formState, watch, reset } = methods;
-  console.log(formState);
 
   return (
     <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
 
-      <Form method="post" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-2">
-          <input type="text" {...register("email")} />
-        </div>
+      <Form method="post" encType="multipart/form-data" onSubmit={handleSubmit}>
+        <input type="file" {...register("file")} />
         <div>
           <button type="submit" className="button">
             Add
