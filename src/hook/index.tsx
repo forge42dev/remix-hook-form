@@ -33,7 +33,7 @@ export interface UseRemixFormOptions<T extends FieldValues>
   };
   submitConfig?: SubmitFunctionOptions;
   submitData?: FieldValues;
-  fetcher?: FetcherWithComponents<T>;
+  fetcher?: FetcherWithComponents<unknown>;
 }
 
 export const useRemixForm = <T extends FieldValues>({

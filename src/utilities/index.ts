@@ -153,6 +153,12 @@ export const createFormData = <T extends FieldValues>(data: T): FormData => {
     return formData;
   }
   Object.entries(data).map(([key, value]) => {
+    if (value instanceof FileList) {
+      for (let i = 0; i < value.length; i++) {
+        formData.append(key, value[i]);
+      }
+      return;
+    }
     if (value instanceof File || value instanceof Blob) {
       formData.append(key, value);
     } else formData.append(key, JSON.stringify(value));

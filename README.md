@@ -82,6 +82,48 @@ export default function MyForm() {
 }
 ```
 
+## File Upload example
+
+```jsx
+import { type UploadHandler } from "@remix-run/node";
+
+export const fileUploadHandler =
+  (): UploadHandler =>
+  async ({ data, filename }) => {
+    const chunks = []; 
+    for await (const chunk of data) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+    // If there's no filename, it's a text field and we can return the value directly
+    if (!filename) {
+      const textDecoder = new TextDecoder();
+      return textDecoder.decode(buffer);
+    }
+
+    return new File([buffer], filename, { type: "image/jpeg" });
+  };
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  // use the upload handler to parse the file
+  const formData = await unstable_parseMultipartFormData(
+    request,
+    fileUploadHandler(),
+  );
+  // The file will be there
+  console.log(formData.get("file"));
+  // validate the form data
+  const { errors, data } = await validateFormData(formData, resolver);
+  if (errors) {
+    return json(errors, {
+      status: 422,
+    });
+  }
+  return json({ result: "success" });
+};
+
+```
+
 ## Fetcher usage
 
 You can pass in a fetcher as an optional prop and `useRemixForm` will use that fetcher to submit the data and read the errors instead of the default behavior. For more info see the docs on `useRemixForm` below.
