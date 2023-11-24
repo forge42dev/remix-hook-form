@@ -84,31 +84,16 @@ export default function MyForm() {
 
 ## File Upload example
 
-```jsx
-import { type UploadHandler } from "@remix-run/node";
+For more details see [File Uploads guide](https://remix.run/docs/en/main/guides/file-uploads) in Remix docs.
 
-export const fileUploadHandler =
-  (): UploadHandler =>
-  async ({ data, filename }) => {
-    const chunks = []; 
-    for await (const chunk of data) {
-      chunks.push(chunk);
-    }
-    const buffer = Buffer.concat(chunks);
-    // If there's no filename, it's a text field and we can return the value directly
-    if (!filename) {
-      const textDecoder = new TextDecoder();
-      return textDecoder.decode(buffer);
-    }
-
-    return new File([buffer], filename, { type: "image/jpeg" });
-  };
+```ts
+import { unstable_createMemoryUploadHandler, unstable_parseMultipartFormData, ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   // use the upload handler to parse the file
   const formData = await unstable_parseMultipartFormData(
     request,
-    fileUploadHandler(),
+    unstable_createMemoryUploadHandler(),
   );
   // The file will be there
   console.log(formData.get("file"));
@@ -121,7 +106,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   return json({ result: "success" });
 };
-
 ```
 
 ## Fetcher usage
