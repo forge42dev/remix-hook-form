@@ -26,12 +26,12 @@ Or, if you prefer [yarn](https://yarnpkg.com/):
 
 Here is an example usage of remix-hook-form. It will work with **and without** JS.
 
-```jsx
+```ts
 import { useRemixForm, getValidatedFormData } from "remix-hook-form";
 import { Form } from "@remix-run/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as zod from "zod";
-import { ActionArgs, json } from "@remix-run/server-runtime";
+import { ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
 
 const schema = zod.object({
   name: zod.string().nonempty(),
@@ -42,7 +42,7 @@ type FormData = zod.infer<typeof schema>;
 
 const resolver = zodResolver(schema);
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const { errors, data, receivedValues: defaultValues } =
     await getValidatedFormData<FormData>(request, resolver);
   if (errors) {
@@ -59,7 +59,7 @@ export default function MyForm() {
     handleSubmit,
     formState: { errors },
     register,
-  } = useRemixForm({
+  } = useRemixForm<FormData>({
     mode: "onSubmit",
     resolver,
   });
