@@ -131,7 +131,7 @@ The `receivedValues` property allows you to set the default values of your form 
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Takes the request from the frontend, parses and validates it and returns the data
   const { errors, data } =
     await getValidatedFormData<FormData>(request, resolver);
@@ -147,7 +147,7 @@ If your action returrns `defaultValues` key then it will be automatically used b
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Takes the request from the frontend, parses and validates it and returns the data
   const { errors, data, receivedValues: defaultValues } =
     await getValidatedFormData<FormData>(request, resolver);
@@ -168,7 +168,7 @@ The difference between `validateFormData` and `getValidatedFormData` is that `va
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Lets assume you get the data in a different way here but still want to validate it
   const formData = await yourWayOfGettingFormData(request);
   // Takes the request from the frontend, parses and validates it and returns the data
@@ -216,7 +216,7 @@ parseFormData is a utility function that can be used to parse the data submitted
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Allows you to get the data from the request object without having to validate it
   const formData = await parseFormData(request);
   // formData.age will be a number
