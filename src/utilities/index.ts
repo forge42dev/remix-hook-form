@@ -144,10 +144,13 @@ export const validateFormData = async <T extends FieldValues>(
   Creates a new instance of FormData with the specified data and key.
   @template T - The type of the data parameter. It can be any type of FieldValues.
   @param {T} data - The data to be added to the FormData. It can be either an object of type FieldValues.
-  @param {string} [key="formData"] - The key to be used for adding the data to the FormData.
+  @param {boolean} stringifyAll - Should the form data be stringified or not (default: true) eg: {a: '"string"', b: "1"} vs {a: "string", b: "1"}
   @returns {FormData} - The FormData object with the data added to it.
 */
-export const createFormData = <T extends FieldValues>(data: T): FormData => {
+export const createFormData = <T extends FieldValues>(
+  data: T,
+  stringifyAll = true,
+): FormData => {
   const formData = new FormData();
   if (!data) {
     return formData;
@@ -161,7 +164,16 @@ export const createFormData = <T extends FieldValues>(data: T): FormData => {
     }
     if (value instanceof File || value instanceof Blob) {
       formData.append(key, value);
-    } else formData.append(key, JSON.stringify(value));
+    } else {
+      if (stringifyAll) {
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(
+          key,
+          typeof value === "string" ? value : JSON.stringify(value),
+        );
+      }
+    }
   });
 
   return formData;
@@ -169,17 +181,19 @@ export const createFormData = <T extends FieldValues>(data: T): FormData => {
 
 /**
 Parses the specified Request object's FormData to retrieve the data associated with the specified key.
+Or parses the specified FormData to retrieve the data 
 @template T - The type of the data to be returned.
-@param {Request} request - The Request object whose FormData is to be parsed.
+@param {Request | FormData} request - The Request object whose FormData is to be parsed.
 @param {boolean} [preserveStringified=false] - Whether to preserve stringified values or try to convert them
 @returns {Promise<T>} - A promise that resolves to the data of type T.
 @throws {Error} - If no data is found for the specified key, or if the retrieved data is not a string.
 */
 export const parseFormData = async <T extends any>(
-  request: Request,
+  request: Request | FormData,
   preserveStringified = false,
 ): Promise<T> => {
-  const formData = await request.formData();
+  const formData =
+    request instanceof Request ? await request.formData() : request;
   return generateFormData(formData, preserveStringified);
 };
 /**

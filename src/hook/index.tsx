@@ -34,6 +34,10 @@ export interface UseRemixFormOptions<T extends FieldValues>
   submitConfig?: SubmitFunctionOptions;
   submitData?: FieldValues;
   fetcher?: FetcherWithComponents<unknown>;
+  /**
+   * If true, all values will be stringified before being sent to the server, otherwise everything but strings will be stringified (default: true)
+   */
+  stringifyAllValues?: boolean;
 }
 
 export const useRemixForm = <T extends FieldValues>({
@@ -41,6 +45,7 @@ export const useRemixForm = <T extends FieldValues>({
   submitConfig,
   submitData,
   fetcher,
+  stringifyAllValues = true,
   ...formProps
 }: UseRemixFormOptions<T>) => {
   const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] =
@@ -58,7 +63,10 @@ export const useRemixForm = <T extends FieldValues>({
   // Submits the data to the server when form is valid
   const onSubmit = (data: T) => {
     setIsSubmittedSuccessfully(true);
-    const formData = createFormData({ ...data, ...submitData });
+    const formData = createFormData(
+      { ...data, ...submitData },
+      stringifyAllValues,
+    );
     submit(formData, {
       method: "post",
       ...submitConfig,
