@@ -2,7 +2,6 @@ import type {
   FieldValues,
   Resolver,
   FieldErrors,
-  FieldErrorsImpl,
   DeepRequired,
 } from "react-hook-form";
 
@@ -202,11 +201,11 @@ The function recursively merges the objects and returns the resulting object.
 @template T - The generic type of the object.
 @param frontendErrors - The frontend errors
 @param backendErrors - The backend errors
-@returns The merged errors of type Partial<FieldErrorsImpl<DeepRequired<T>>>.
+@returns The merged errors of type Partial<FieldErrors< T>>.
 */
 export const mergeErrors = <T extends FieldValues>(
-  frontendErrors: Partial<FieldErrorsImpl<DeepRequired<T>>>,
-  backendErrors?: Partial<FieldErrorsImpl<DeepRequired<T>>>,
+  frontendErrors: Partial<FieldErrors<T>>,
+  backendErrors?: Partial<FieldErrors<T>>,
   validKeys: string[] = [],
   depth = 0,
 ) => {

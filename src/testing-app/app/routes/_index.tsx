@@ -98,8 +98,8 @@ export default function Index() {
       encType: "multipart/form-data",
     },
   });
-  const { register, handleSubmit, formState, watch, reset } = methods;
-
+  const { register, handleSubmit, formState, watch, setError } = methods;
+  setError("root.test", { type: "manual", message: "test" });
   return (
     <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
