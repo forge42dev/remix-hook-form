@@ -26,12 +26,12 @@ Or, if you prefer [yarn](https://yarnpkg.com/):
 
 Here is an example usage of remix-hook-form. It will work with **and without** JS.
 
-```jsx
+```ts
 import { useRemixForm, getValidatedFormData } from "remix-hook-form";
 import { Form } from "@remix-run/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as zod from "zod";
-import { ActionArgs, json } from "@remix-run/server-runtime";
+import { ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
 
 const schema = zod.object({
   name: zod.string().nonempty(),
@@ -42,7 +42,7 @@ type FormData = zod.infer<typeof schema>;
 
 const resolver = zodResolver(schema);
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const { errors, data, receivedValues: defaultValues } =
     await getValidatedFormData<FormData>(request, resolver);
   if (errors) {
@@ -59,7 +59,7 @@ export default function MyForm() {
     handleSubmit,
     formState: { errors },
     register,
-  } = useRemixForm({
+  } = useRemixForm<FormData>({
     mode: "onSubmit",
     resolver,
   });
@@ -84,31 +84,16 @@ export default function MyForm() {
 
 ## File Upload example
 
-```jsx
-import { type UploadHandler } from "@remix-run/node";
+For more details see [File Uploads guide](https://remix.run/docs/en/main/guides/file-uploads) in Remix docs.
 
-export const fileUploadHandler =
-  (): UploadHandler =>
-  async ({ data, filename }) => {
-    const chunks = []; 
-    for await (const chunk of data) {
-      chunks.push(chunk);
-    }
-    const buffer = Buffer.concat(chunks);
-    // If there's no filename, it's a text field and we can return the value directly
-    if (!filename) {
-      const textDecoder = new TextDecoder();
-      return textDecoder.decode(buffer);
-    }
-
-    return new File([buffer], filename, { type: "image/jpeg" });
-  };
+```ts
+import { unstable_createMemoryUploadHandler, unstable_parseMultipartFormData, ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   // use the upload handler to parse the file
   const formData = await unstable_parseMultipartFormData(
     request,
-    fileUploadHandler(),
+    unstable_createMemoryUploadHandler(),
   );
   // The file will be there
   console.log(formData.get("file"));
@@ -121,7 +106,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   return json({ result: "success" });
 };
-
 ```
 
 ## Fetcher usage
@@ -147,7 +131,7 @@ The `receivedValues` property allows you to set the default values of your form 
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Takes the request from the frontend, parses and validates it and returns the data
   const { errors, data } =
     await getValidatedFormData<FormData>(request, resolver);
@@ -163,7 +147,7 @@ If your action returrns `defaultValues` key then it will be automatically used b
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Takes the request from the frontend, parses and validates it and returns the data
   const { errors, data, receivedValues: defaultValues } =
     await getValidatedFormData<FormData>(request, resolver);
@@ -184,7 +168,7 @@ The difference between `validateFormData` and `getValidatedFormData` is that `va
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Lets assume you get the data in a different way here but still want to validate it
   const formData = await yourWayOfGettingFormData(request);
   // Takes the request from the frontend, parses and validates it and returns the data
@@ -232,7 +216,7 @@ parseFormData is a utility function that can be used to parse the data submitted
 ```jsx
 /** all the same code from above */
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // Allows you to get the data from the request object without having to validate it
   const formData = await parseFormData(request);
   // formData.age will be a number
