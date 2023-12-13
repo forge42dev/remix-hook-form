@@ -106,7 +106,7 @@ export const isGet = (request: Pick<Request, "method">) =>
  */
 export const getValidatedFormData = async <T extends FieldValues>(
   request: Request,
-  resolver: Resolver,
+  resolver: Resolver<T>,
 ) => {
   const data = isGet(request)
     ? getFormDataFromSearchParams(request)
@@ -124,7 +124,7 @@ export const getValidatedFormData = async <T extends FieldValues>(
  */
 export const validateFormData = async <T extends FieldValues>(
   data: any,
-  resolver: Resolver,
+  resolver: Resolver<T>,
 ) => {
   const dataToValidate =
     data instanceof FormData ? Object.fromEntries(data) : data;
