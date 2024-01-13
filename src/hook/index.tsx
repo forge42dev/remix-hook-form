@@ -21,7 +21,7 @@ import type {
   UseFormProps,
   UseFormReturn,
 } from "react-hook-form";
-import { createFormData, mergeErrors } from "../utilities";
+import { createFormData } from "../utilities";
 
 export type SubmitFunctionOptions = Parameters<SubmitFunction>[1];
 
@@ -54,7 +54,7 @@ export const useRemixForm = <T extends FieldValues>({
   const actionData = useActionData();
   const submit = fetcher?.submit ?? actionSubmit;
   const data: any = fetcher?.data ?? actionData;
-  const methods = useForm<T>(formProps);
+  const methods = useForm<T>({ ...formProps, errors: data?.errors });
   const navigation = useNavigation();
   // Either it's submitted to an action or submitted to a fetcher (or neither)
   const isSubmittingForm =
@@ -72,12 +72,9 @@ export const useRemixForm = <T extends FieldValues>({
       ...submitConfig,
     });
   };
-  const values = methods.getValues();
-  const validKeys = Object.keys(values);
+
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const onInvalid = () => {};
-
-  const formState = methods.formState;
 
   const {
     dirtyFields,
@@ -92,13 +89,7 @@ export const useRemixForm = <T extends FieldValues>({
     errors,
     isLoading,
     disabled,
-  } = formState;
-
-  const formErrors = mergeErrors<T>(
-    errors,
-    data?.errors ? data.errors : data,
-    validKeys,
-  );
+  } = methods.formState;
 
   return {
     ...methods,
@@ -133,7 +124,7 @@ export const useRemixForm = <T extends FieldValues>({
       touchedFields,
       submitCount,
       isLoading,
-      errors: formErrors,
+      errors,
     },
   };
 };

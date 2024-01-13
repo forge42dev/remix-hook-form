@@ -47,7 +47,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await getValidatedFormData<FormData>(request, resolver);
   if (errors) {
     // The keys "errors" and "defaultValue" are picked up automatically by useRemixForm
-    return json({errors, defaultValues});
+    return json({ errors, defaultValues });
   }
 
   // Do something with the data
@@ -100,7 +100,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // validate the form data
   const { errors, data } = await validateFormData(formData, resolver);
   if (errors) {
-    return json(errors, {
+    return json({ errors }, {
       status: 422,
     });
   }
@@ -136,7 +136,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { errors, data } =
     await getValidatedFormData<FormData>(request, resolver);
   if (errors) {
-    return json(errors);
+    return json({ errors });
   }
   // Do something with the data
 };
@@ -175,7 +175,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { errors, data } =
     await validateFormData<FormData>(formData, resolver);
   if (errors) {
-    return json(errors);
+    return json({ errors });
   }
   // Do something with the data
 };

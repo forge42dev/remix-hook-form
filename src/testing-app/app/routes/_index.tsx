@@ -99,13 +99,16 @@ export default function Index() {
     },
   });
   const { register, handleSubmit, formState, watch, setError } = methods;
-  setError("root.test", { type: "manual", message: "test" });
+
   return (
     <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
 
       <Form method="post" encType="multipart/form-data" onSubmit={handleSubmit}>
         <input type="file" {...register("file")} />
+        {formState.errors.file && (
+          <p className="error">{formState.errors.file.message}</p>
+        )}
         <div>
           <button type="submit" className="button">
             Add

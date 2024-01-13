@@ -5,7 +5,6 @@ import {
   getFormDataFromSearchParams,
   getValidatedFormData,
   isGet,
-  mergeErrors,
   parseFormData,
   validateFormData,
 } from "./index";
@@ -110,62 +109,6 @@ describe("parseFormData", () => {
     requestFormDataSpy.mockResolvedValueOnce(mockFormData);
     const data = await parseFormData<{ formData: any }>(request);
     expect(data.formData).toBeTypeOf("string");
-  });
-});
-
-describe("mergeErrors", () => {
-  it("should return the backend errors if frontend errors is not provided", () => {
-    const backendErrors: any = {
-      username: { message: "This field is required" },
-    };
-    const mergedErrors = mergeErrors({}, backendErrors);
-    expect(mergedErrors).toEqual(backendErrors);
-  });
-
-  it("should return the frontend errors if backend errors is not provided", () => {
-    const frontendErrors: any = { email: { message: "Invalid email" } };
-    const mergedErrors = mergeErrors(frontendErrors, undefined);
-    expect(mergedErrors).toEqual(frontendErrors);
-  });
-
-  it("should merge nested objects recursively", () => {
-    const frontendErrors: any = {
-      password: { message: "Password is required" },
-      confirmPassword: { message: "Passwords do not match" },
-      profile: { firstName: { message: "First name is required" } },
-    };
-    const backendErrors: any = {
-      confirmPassword: { message: "Password confirmation is required" },
-      profile: {
-        lastName: { message: "Last name is required" },
-        address: { street: { message: "Street is required" } },
-      },
-    };
-    const expectedErrors = {
-      password: { message: "Password is required" },
-      confirmPassword: { message: "Password confirmation is required" },
-      profile: {
-        firstName: { message: "First name is required" },
-        lastName: { message: "Last name is required" },
-        address: { street: { message: "Street is required" } },
-      },
-    };
-    const mergedErrors = mergeErrors(frontendErrors, backendErrors);
-    expect(mergedErrors).toEqual(expectedErrors);
-  });
-
-  it("should overwrite the frontend error message with the backend error message", () => {
-    const frontendErrors: any = {
-      username: { message: "This field is required" },
-    };
-    const backendErrors: any = {
-      username: { message: "The username is already taken" },
-    };
-    const expectedErrors = {
-      username: { message: "The username is already taken" },
-    };
-    const mergedErrors = mergeErrors(frontendErrors, backendErrors);
-    expect(mergedErrors).toEqual(expectedErrors);
   });
 });
 
