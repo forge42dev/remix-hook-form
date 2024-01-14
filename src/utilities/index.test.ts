@@ -41,6 +41,12 @@ describe("createFormData", () => {
     const formData = createFormData(undefined as any);
     expect(formData).toBeTruthy();
   });
+
+  it("should handle Date data", () => {
+    const date = "2024-01-01T00:00:00.000Z";
+    const formData = createFormData({ date: new Date(date) }, false);
+    expect(formData.get("date")).toEqual(date);
+  });
 });
 
 describe("parseFormData", () => {

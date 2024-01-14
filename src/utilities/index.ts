@@ -1,9 +1,4 @@
-import type {
-  FieldValues,
-  Resolver,
-  FieldErrors,
-  DeepRequired,
-} from "react-hook-form";
+import type { FieldValues, Resolver, FieldErrors } from "react-hook-form";
 
 const tryParseJSON = (jsonString: string) => {
   try {
@@ -167,10 +162,13 @@ export const createFormData = <T extends FieldValues>(
       if (stringifyAll) {
         formData.append(key, JSON.stringify(value));
       } else {
-        formData.append(
-          key,
-          typeof value === "string" ? value : JSON.stringify(value),
-        );
+        if (typeof value === "string") {
+          formData.append(key, value);
+        } else if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else {
+          formData.append(key, JSON.stringify(value));
+        }
       }
     }
   });
