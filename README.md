@@ -34,8 +34,8 @@ import * as zod from "zod";
 import { ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
 
 const schema = zod.object({
-  name: zod.string().nonempty(),
-  email: zod.string().email().nonempty(),
+  name: zod.string().min(1),
+  email: zod.string().email().min(1),
 });
 
 type FormData = zod.infer<typeof schema>;
