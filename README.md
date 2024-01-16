@@ -12,19 +12,16 @@ And the best part? Remix-hook-form has zero dependencies, making it easy to inte
 
 Oh, and did we mention that this is fully Progressively enhanced? That's right, you can use this with or without javascript!
 
-## Installation
 
-You can install the latest version of remix-hook-form using [npm](https://www.npmjs.com/):
+## Install
 
-`npm install remix-hook-form`
-
-Or, if you prefer [yarn](https://yarnpkg.com/):
-
-`yarn add remix-hook-form`
+    npm install remix-hook-form react-hook-form
 
 ## Basic usage
 
-Here is an example usage of remix-hook-form. It will work with **and without** JS.
+Here is an example usage of remix-hook-form. It will work with **and without** JS. Before running the example, ensure to install additional dependencies:
+
+    npm install zod @hookform/resolvers
 
 ```ts
 import { useRemixForm, getValidatedFormData } from "remix-hook-form";
