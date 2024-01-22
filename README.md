@@ -109,6 +109,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 You can pass in a fetcher as an optional prop and `useRemixForm` will use that fetcher to submit the data and read the errors instead of the default behavior. For more info see the docs on `useRemixForm` below.
 
+
+## Video example and tutorial
+
+If you wish to learn in depth on how form handling works in Remix and want an example using this package I have prepared a video tutorial on how to do it. It's a bit long but it covers everything 
+you need to know about form handling in Remix. It also covers how to use this package. You can find it here:
+
+https://youtu.be/iom5nnj29sY?si=l52WRE2bqpkS2QUh
+
+
 ## API's
 
 ### getValidatedFormData
