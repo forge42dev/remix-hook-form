@@ -15,6 +15,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import type {
   DefaultValues,
   FieldValues,
+  KeepStateOptions,
   Path,
   RegisterOptions,
   UseFormHandleSubmit,
@@ -97,9 +98,12 @@ export const useRemixForm = <T extends FieldValues>({
       submitHandlers?.onValid ?? onSubmit,
       submitHandlers?.onInvalid ?? onInvalid,
     ),
-    reset: (values?: T | DefaultValues<T> | undefined) => {
+    reset: (
+      values?: T | DefaultValues<T> | undefined,
+      options?: KeepStateOptions,
+    ) => {
       setIsSubmittedSuccessfully(false);
-      methods.reset(values);
+      methods.reset(values, options);
     },
     register: (
       name: Path<T>,
