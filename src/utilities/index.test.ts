@@ -1,4 +1,4 @@
-import { array, boolean, number, object, string } from "zod";
+import { array, boolean, coerce, date, number, object, string } from "zod";
 import {
   createFormData,
   generateFormData,
@@ -40,6 +40,12 @@ describe("createFormData", () => {
   it("should handle undefined data", () => {
     const formData = createFormData(undefined as any);
     expect(formData).toBeTruthy();
+  });
+
+  it("should handle Date data", () => {
+    const date = "2024-01-01T00:00:00.000Z";
+    const formData = createFormData({ date: new Date(date) }, false);
+    expect(formData.get("date")).toEqual(date);
   });
 });
 
@@ -232,6 +238,56 @@ describe("getFormDataFromSearchParams", () => {
 });
 
 describe("validateFormData", () => {
+  it("should return an error when parsing date object without coerce", async () => {
+    const formData = createFormData({
+      date: new Date(2024, 1, 1),
+    });
+    const returnData = await validateFormData(
+      formData,
+      zodResolver(object({ date: date() })),
+    );
+    expect(returnData.errors).toStrictEqual({
+      date: {
+        message: "Expected date, received string",
+        type: "invalid_type",
+        ref: undefined,
+      },
+    });
+    expect(returnData.data).toStrictEqual(undefined);
+  });
+
+  it("should return an error when parsing date object with coerce", async () => {
+    const formData = createFormData({
+      date: new Date(2024, 1, 1),
+    });
+    const returnData = await validateFormData(
+      formData,
+      zodResolver(object({ date: coerce.date() })),
+    );
+    expect(returnData.errors).toStrictEqual({
+      date: {
+        message: "Invalid date",
+        type: "invalid_date",
+        ref: undefined,
+      },
+    });
+    expect(returnData.data).toStrictEqual(undefined);
+  });
+
+  it("should return a correct value when formatting as object", async () => {
+    const formData = createFormData({
+      date: new Date(2024, 1, 1),
+    }, false);
+    const returnData = await validateFormData(
+      formData,
+      zodResolver(object({ date: coerce.date() })),
+    );
+    expect(returnData.errors).toStrictEqual(undefined);
+    expect(returnData.data).toStrictEqual({
+      date: new Date(2024, 1, 1),
+    });
+  });
+
   it("should return an empty error object and valid data if there are no errors", async () => {
     const formData = {
       name: "John Doe",
