@@ -96,15 +96,17 @@ export const isGet = (request: Pick<Request, "method">) =>
  * @async
  * @param {Request} request - An object that represents an HTTP request.
  * @param validator - A function that resolves the schema.
+ * @param {boolean} [preserveStringified=false] - Whether to preserve stringified values or try to convert them
  * @returns A Promise that resolves to an object containing the validated data or any errors that occurred during validation.
  */
 export const getValidatedFormData = async <T extends FieldValues>(
   request: Request,
   resolver: Resolver<T>,
+  preserveStringified = false,
 ) => {
   const data = isGet(request)
-    ? getFormDataFromSearchParams(request)
-    : await parseFormData<T>(request);
+    ? getFormDataFromSearchParams(request, preserveStringified)
+    : await parseFormData<T>(request, preserveStringified);
 
   const validatedOutput = await validateFormData<T>(data, resolver);
   return { ...validatedOutput, receivedValues: data };
