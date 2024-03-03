@@ -39,6 +39,7 @@ describe("useRemixForm", () => {
       isSubmitting: false,
       isValid: false,
       isValidating: false,
+      validatingFields: {},
       touchedFields: {},
       submitCount: 0,
       isLoading: false,
