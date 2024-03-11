@@ -134,6 +134,40 @@ describe("useRemixForm", () => {
       });
     });
   });
+
+  it("should not re-render on validation if isValidating is not being accessed", async () => {
+    const renderHookWithCount = () => {
+      let count = 0;
+      const renderCount = () => count;
+      const result = renderHook(() => {
+        count++;
+        return useRemixForm({
+          mode: "onChange",
+          resolver: () => ({
+            values: {
+              name: "",
+            },
+            errors: {},
+          }),
+        });
+      });
+      return { renderCount, ...result };
+    };
+
+    const { result, renderCount } = renderHookWithCount();
+
+    await act(async () => {
+      result.current.setValue("name", "John", { shouldValidate: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      result.current.setValue("name", "Bob", { shouldValidate: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(renderCount()).toBe(1);
+  });
 });
 
 afterEach(cleanup);
