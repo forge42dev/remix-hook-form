@@ -78,6 +78,8 @@ export const useRemixForm = <T extends FieldValues>({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const onInvalid = () => {};
 
+  // React-hook-form uses lazy property getters to avoid re-rendering when properties
+  // that aren't being used change. Using getters here preservers that lazy behavior.
   const formState: FormState<T> = {
     get isDirty() {
       return methods.formState.isDirty;
