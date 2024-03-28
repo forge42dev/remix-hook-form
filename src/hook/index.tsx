@@ -15,6 +15,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import type {
   DefaultValues,
   FieldValues,
+  FormState,
   KeepStateOptions,
   Path,
   RegisterOptions,
@@ -77,21 +78,52 @@ export const useRemixForm = <T extends FieldValues>({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const onInvalid = () => {};
 
-  const {
-    dirtyFields,
-    isDirty,
-    isSubmitSuccessful,
-    isSubmitted,
-    isSubmitting,
-    isValid,
-    isValidating,
-    validatingFields,
-    touchedFields,
-    submitCount,
-    errors,
-    isLoading,
-    disabled,
-  } = methods.formState;
+  // React-hook-form uses lazy property getters to avoid re-rendering when properties
+  // that aren't being used change. Using getters here preservers that lazy behavior.
+  const formState: FormState<T> = {
+    get isDirty() {
+      return methods.formState.isDirty;
+    },
+    get isLoading() {
+      return methods.formState.isLoading;
+    },
+    get isSubmitted() {
+      return methods.formState.isSubmitted;
+    },
+    get isSubmitSuccessful() {
+      return isSubmittedSuccessfully || methods.formState.isSubmitSuccessful;
+    },
+    get isSubmitting() {
+      return isSubmittingForm || methods.formState.isSubmitting;
+    },
+    get isValidating() {
+      return methods.formState.isValidating;
+    },
+    get isValid() {
+      return methods.formState.isValid;
+    },
+    get disabled() {
+      return methods.formState.disabled;
+    },
+    get submitCount() {
+      return methods.formState.submitCount;
+    },
+    get defaultValues() {
+      return methods.formState.defaultValues;
+    },
+    get dirtyFields() {
+      return methods.formState.dirtyFields;
+    },
+    get touchedFields() {
+      return methods.formState.touchedFields;
+    },
+    get validatingFields() {
+      return methods.formState.validatingFields;
+    },
+    get errors() {
+      return methods.formState.errors;
+    },
+  };
 
   return {
     ...methods,
@@ -117,21 +149,7 @@ export const useRemixForm = <T extends FieldValues>({
         defaultValue: data?.defaultValues?.[name] ?? "",
       }),
     }),
-    formState: {
-      disabled,
-      dirtyFields,
-      isDirty,
-      isSubmitSuccessful: isSubmittedSuccessfully || isSubmitSuccessful,
-      isSubmitted,
-      isSubmitting: isSubmittingForm || isSubmitting,
-      isValid,
-      isValidating,
-      validatingFields,
-      touchedFields,
-      submitCount,
-      isLoading,
-      errors,
-    },
+    formState,
   };
 };
 interface RemixFormProviderProps<T extends FieldValues>

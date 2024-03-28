@@ -134,6 +134,78 @@ describe("useRemixForm", () => {
       });
     });
   });
+
+  it("should not re-render on validation if isValidating is not being accessed", async () => {
+    const renderHookWithCount = () => {
+      let count = 0;
+      const renderCount = () => count;
+      const result = renderHook(() => {
+        count++;
+        return useRemixForm({
+          mode: "onChange",
+          resolver: () => ({
+            values: {
+              name: "",
+            },
+            errors: {},
+          }),
+        });
+      });
+      return { renderCount, ...result };
+    };
+
+    const { result, renderCount } = renderHookWithCount();
+
+    await act(async () => {
+      result.current.setValue("name", "John", { shouldValidate: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      result.current.setValue("name", "Bob", { shouldValidate: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(renderCount()).toBe(1);
+  });
+
+  it("should re-render on validation if isValidating is being accessed", async () => {
+    const renderHookWithCount = () => {
+      let count = 0;
+      const renderCount = () => count;
+      const result = renderHook(() => {
+        count++;
+        return useRemixForm({
+          mode: "onChange",
+          resolver: () => ({
+            values: {
+              name: "",
+            },
+            errors: {},
+          }),
+        });
+      });
+      return { renderCount, ...result };
+    };
+
+    const { result, renderCount } = renderHookWithCount();
+
+    // Accessing isValidating
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const isValidating = result.current.formState.isValidating;
+
+    await act(async () => {
+      result.current.setValue("name", "John", { shouldValidate: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      result.current.setValue("name", "Bob", { shouldValidate: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(renderCount()).toBe(3);
+  });
 });
 
 afterEach(cleanup);
