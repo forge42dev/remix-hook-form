@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   FetcherWithComponents,
   SubmitFunction,
@@ -59,98 +59,130 @@ export const useRemixForm = <T extends FieldValues>({
   const methods = useForm<T>({ ...formProps, errors: data?.errors });
   const navigation = useNavigation();
   // Either it's submitted to an action or submitted to a fetcher (or neither)
-  const isSubmittingForm =
-    navigation.state !== "idle" || (fetcher && fetcher.state !== "idle");
+  const isSubmittingForm = useMemo(
+    () =>
+      (navigation.state !== "idle" && navigation.formData !== undefined) ||
+      (fetcher && fetcher.state !== "idle" && fetcher.formData !== undefined),
+    [navigation.state, navigation.formData, fetcher?.state, fetcher?.formData],
+  );
 
   // Submits the data to the server when form is valid
-  const onSubmit = (data: T) => {
-    setIsSubmittedSuccessfully(true);
-    const formData = createFormData(
-      { ...data, ...submitData },
-      stringifyAllValues,
-    );
-    submit(formData, {
-      method: "post",
-      ...submitConfig,
-    });
-  };
+  const onSubmit = useMemo(
+    () => (data: T) => {
+      setIsSubmittedSuccessfully(true);
+      const formData = createFormData(
+        { ...data, ...submitData },
+        stringifyAllValues,
+      );
+      submit(formData, {
+        method: "post",
+        ...submitConfig,
+      });
+    },
+    [submit, submitConfig, submitData, stringifyAllValues],
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  const onInvalid = () => {};
+  const onInvalid = useMemo(() => () => {}, []);
 
   // React-hook-form uses lazy property getters to avoid re-rendering when properties
   // that aren't being used change. Using getters here preservers that lazy behavior.
-  const formState: FormState<T> = {
-    get isDirty() {
-      return methods.formState.isDirty;
-    },
-    get isLoading() {
-      return methods.formState.isLoading;
-    },
-    get isSubmitted() {
-      return methods.formState.isSubmitted;
-    },
-    get isSubmitSuccessful() {
-      return isSubmittedSuccessfully || methods.formState.isSubmitSuccessful;
-    },
-    get isSubmitting() {
-      return isSubmittingForm || methods.formState.isSubmitting;
-    },
-    get isValidating() {
-      return methods.formState.isValidating;
-    },
-    get isValid() {
-      return methods.formState.isValid;
-    },
-    get disabled() {
-      return methods.formState.disabled;
-    },
-    get submitCount() {
-      return methods.formState.submitCount;
-    },
-    get defaultValues() {
-      return methods.formState.defaultValues;
-    },
-    get dirtyFields() {
-      return methods.formState.dirtyFields;
-    },
-    get touchedFields() {
-      return methods.formState.touchedFields;
-    },
-    get validatingFields() {
-      return methods.formState.validatingFields;
-    },
-    get errors() {
-      return methods.formState.errors;
-    },
-  };
-
-  return {
-    ...methods,
-    handleSubmit: methods.handleSubmit(
-      submitHandlers?.onValid ?? onSubmit,
-      submitHandlers?.onInvalid ?? onInvalid,
-    ),
-    reset: (
-      values?: T | DefaultValues<T> | undefined,
-      options?: KeepStateOptions,
-    ) => {
-      setIsSubmittedSuccessfully(false);
-      methods.reset(values, options);
-    },
-    register: (
-      name: Path<T>,
-      options?: RegisterOptions<T> & {
-        disableProgressiveEnhancement?: boolean;
+  const formState: FormState<T> = useMemo(
+    () => ({
+      get isDirty() {
+        return methods.formState.isDirty;
       },
-    ) => ({
-      ...methods.register(name, options),
-      ...(!options?.disableProgressiveEnhancement && {
-        defaultValue: data?.defaultValues?.[name] ?? "",
-      }),
+      get isLoading() {
+        return methods.formState.isLoading;
+      },
+      get isSubmitted() {
+        return methods.formState.isSubmitted;
+      },
+      get isSubmitSuccessful() {
+        return isSubmittedSuccessfully || methods.formState.isSubmitSuccessful;
+      },
+      get isSubmitting() {
+        return isSubmittingForm || methods.formState.isSubmitting;
+      },
+      get isValidating() {
+        return methods.formState.isValidating;
+      },
+      get isValid() {
+        return methods.formState.isValid;
+      },
+      get disabled() {
+        return methods.formState.disabled;
+      },
+      get submitCount() {
+        return methods.formState.submitCount;
+      },
+      get defaultValues() {
+        return methods.formState.defaultValues;
+      },
+      get dirtyFields() {
+        return methods.formState.dirtyFields;
+      },
+      get touchedFields() {
+        return methods.formState.touchedFields;
+      },
+      get validatingFields() {
+        return methods.formState.validatingFields;
+      },
+      get errors() {
+        return methods.formState.errors;
+      },
     }),
-    formState,
-  };
+    [methods.formState, isSubmittedSuccessfully, isSubmittingForm],
+  );
+  const reset = useMemo(
+    () =>
+      (
+        values?: T | DefaultValues<T> | undefined,
+        options?: KeepStateOptions,
+      ) => {
+        setIsSubmittedSuccessfully(false);
+        methods.reset(values, options);
+      },
+    [methods.reset],
+  );
+
+  const register = useMemo(
+    () =>
+      (
+        name: Path<T>,
+        options?: RegisterOptions<T> & {
+          disableProgressiveEnhancement?: boolean;
+        },
+      ) => ({
+        ...methods.register(name, options),
+        ...(!options?.disableProgressiveEnhancement && {
+          defaultValue: data?.defaultValues?.[name] ?? "",
+        }),
+      }),
+    [methods.register, data?.defaultValues],
+  );
+
+  const handleSubmit = useMemo(
+    () =>
+      methods.handleSubmit(
+        submitHandlers?.onValid ?? onSubmit,
+        submitHandlers?.onInvalid ?? onInvalid,
+      ),
+    [methods.handleSubmit, submitHandlers, onSubmit, onInvalid],
+  );
+
+  const hookReturn = useMemo(
+    () => ({
+      ...methods,
+      handleSubmit,
+      reset,
+      register,
+      formState,
+    }),
+    [methods, handleSubmit, reset, register, formState],
+  );
+
+  return hookReturn;
 };
 interface RemixFormProviderProps<T extends FieldValues>
   extends Omit<UseFormReturn<T>, "handleSubmit" | "reset"> {
