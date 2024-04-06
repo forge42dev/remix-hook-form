@@ -62,7 +62,7 @@ export default function MyForm() {
   });
 
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form onSubmit={handleSubmit} method="POST">
       <label>
         Name:
         <input type="text" {...register("name")} />
