@@ -275,9 +275,12 @@ describe("validateFormData", () => {
   });
 
   it("should return a correct value when formatting as object", async () => {
-    const formData = createFormData({
-      date: new Date(2024, 1, 1),
-    }, false);
+    const formData = createFormData(
+      {
+        date: new Date(2024, 1, 1),
+      },
+      false,
+    );
     const returnData = await validateFormData(
       formData,
       zodResolver(object({ date: coerce.date() })),
@@ -356,11 +359,47 @@ describe("createFormData", () => {
 });
 
 describe("getValidatedFormData", () => {
+  it("gets valid form data from formData", async () => {
+    const formData = {
+      name: "John Doe",
+      age: 30,
+      hobbies: ["Reading", "Writing", "Coding"],
+      boolean: true,
+      numbers: [1, 2, 3],
+      other: {
+        skills: ["testing", "testing"],
+        something: "else",
+      },
+    };
+    const data = createFormData(formData);
+    const schema = object({
+      name: string(),
+      age: number(),
+      boolean: boolean(),
+      numbers: array(number()),
+      hobbies: array(string()),
+      other: object({
+        skills: array(string()),
+        something: string(),
+      }),
+    });
+    const validatedFormData = await getValidatedFormData(
+      data,
+      zodResolver(schema),
+    );
+    expect(validatedFormData).toStrictEqual({
+      data: formData,
+      receivedValues: formData,
+      errors: undefined,
+    });
+  });
+
   it("gets valid form data from a GET request", async () => {
     const request = {
       method: "GET",
       url: "http://localhost:3000/?user.name=john&colors[]=red&colors[]=green&colors[]=blue&numbers[0]=1&numbers[1]=2&numbers[2]=3",
     };
+
     const schema = object({
       user: object({
         name: string(),

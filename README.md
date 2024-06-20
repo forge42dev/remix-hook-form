@@ -84,13 +84,31 @@ export default function MyForm() {
 For more details see [File Uploads guide](https://remix.run/docs/en/main/guides/file-uploads) in Remix docs.
 
 ```ts
-import { unstable_createMemoryUploadHandler, unstable_parseMultipartFormData, ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
+import { unstable_parseMultipartFormData, ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
+
+// You can implement your own uploadHandler, this one serves as a basic example of how to handle file uploads
+export const fileUploadHandler =
+  (): UploadHandler =>
+  async ({ data, filename }) => {
+    const chunks = []; 
+    for await (const chunk of data) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+    // If there's no filename, it's a text field and we can return the value directly
+    if (!filename) {
+      const textDecoder = new TextDecoder();
+      return textDecoder.decode(buffer);
+    }
+    // Otherwise, it's a file and we need to return a File object
+    return new File([buffer], filename, { type: "image/jpeg" });
+  };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   // use the upload handler to parse the file
   const formData = await unstable_parseMultipartFormData(
     request,
-    unstable_createMemoryUploadHandler(),
+    fileUploadHandler(),
   );
   // The file will be there
   console.log(formData.get("file"));

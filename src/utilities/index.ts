@@ -83,6 +83,7 @@ export const getFormDataFromSearchParams = (
   preserveStringified = false,
 ) => {
   const searchParams = new URL(request.url).searchParams;
+
   return generateFormData(searchParams, preserveStringified);
 };
 
@@ -100,13 +101,14 @@ export const isGet = (request: Pick<Request, "method">) =>
  * @returns A Promise that resolves to an object containing the validated data or any errors that occurred during validation.
  */
 export const getValidatedFormData = async <T extends FieldValues>(
-  request: Request,
+  request: Request | FormData,
   resolver: Resolver<T>,
   preserveStringified = false,
 ) => {
-  const data = isGet(request)
-    ? getFormDataFromSearchParams(request, preserveStringified)
-    : await parseFormData<T>(request, preserveStringified);
+  const data =
+    "url" in request && isGet(request)
+      ? getFormDataFromSearchParams(request, preserveStringified)
+      : await parseFormData<T>(request, preserveStringified);
 
   const validatedOutput = await validateFormData<T>(data, resolver);
   return { ...validatedOutput, receivedValues: data };
