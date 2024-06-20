@@ -197,6 +197,9 @@ export const useRemixForm = <T extends FieldValues>({
 
   return hookReturn;
 };
+
+export type UseRemixFormReturn = ReturnType<typeof useRemixForm>;
+
 interface RemixFormProviderProps<T extends FieldValues>
   extends Omit<UseFormReturn<T>, "handleSubmit" | "reset"> {
   children: React.ReactNode;

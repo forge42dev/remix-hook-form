@@ -7,6 +7,7 @@ import {
   type UploadHandler,
 } from "@remix-run/node";
 import { Form, useFetcher } from "@remix-run/react";
+import { useEffect } from "react";
 import {
   getValidatedFormData,
   useRemixForm,
@@ -95,7 +96,12 @@ export default function Index() {
     },
   });
   const { register, handleSubmit, formState, watch, setError } = methods;
-
+  useEffect(() => {
+    setError("root.file", {
+      message: "File is required",
+    });
+  }, []);
+  console.log(formState.errors);
   return (
     <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
