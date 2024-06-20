@@ -70,10 +70,11 @@ export const useRemixForm = <T extends FieldValues>({
   const onSubmit = useMemo(
     () => (data: T) => {
       setIsSubmittedSuccessfully(true);
-      const formData = createFormData(
-        { ...data, ...submitData },
-        stringifyAllValues,
-      );
+      const submitPayload = { ...data, ...submitData };
+      const formData =
+        submitConfig?.encType === "application/json"
+          ? submitPayload
+          : createFormData(submitPayload, stringifyAllValues);
       submit(formData, {
         method: "post",
         ...submitConfig,
