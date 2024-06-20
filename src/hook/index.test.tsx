@@ -63,7 +63,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
-      result.current.handleSubmit();
+      result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
       expect(onValid).toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
-      result.current.handleSubmit();
+      result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
       expect(result.current.formState.isSubmitSuccessful).toBe(true);
@@ -100,7 +100,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
-      result.current.handleSubmit();
+      result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
       expect(submitMock).toHaveBeenCalledWith(expect.any(FormData), {
@@ -125,7 +125,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
-      result.current.handleSubmit();
+      result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
       expect(fetcherSubmitMock).toHaveBeenCalledWith(expect.any(FormData), {

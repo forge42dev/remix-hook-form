@@ -73,7 +73,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     fileUploadHandler(),
   );
   console.log(formData.get("file"));
-  const { errors, data } = await validateFormData(formData, resolver);
+  const { errors, data } = await getValidatedFormData(formData, resolver);
   if (errors) {
     return json(errors, {
       status: 422,
@@ -92,10 +92,6 @@ export default function Index() {
     },
     submitData: {
       test: "test",
-    },
-    submitConfig: {
-      method: "POST",
-      encType: "multipart/form-data",
     },
   });
   const { register, handleSubmit, formState, watch, setError } = methods;

@@ -1,10 +1,12 @@
-import React, { useMemo } from "react";
+import React, { FormEvent, useMemo } from "react";
 import {
   FetcherWithComponents,
   SubmitFunction,
   useActionData,
   useSubmit,
   useNavigation,
+  FormEncType,
+  FormMethod,
 } from "@remix-run/react";
 import {
   SubmitErrorHandler,
@@ -68,18 +70,22 @@ export const useRemixForm = <T extends FieldValues>({
 
   // Submits the data to the server when form is valid
   const onSubmit = useMemo(
-    () => (data: T) => {
-      setIsSubmittedSuccessfully(true);
-      const submitPayload = { ...data, ...submitData };
-      const formData =
-        submitConfig?.encType === "application/json"
-          ? submitPayload
-          : createFormData(submitPayload, stringifyAllValues);
-      submit(formData, {
-        method: "post",
-        ...submitConfig,
-      });
-    },
+    () =>
+      (data: T, e: any, formEncType?: FormEncType, formMethod?: FormMethod) => {
+        setIsSubmittedSuccessfully(true);
+        const encType = submitConfig?.encType ?? formEncType;
+        const method = submitConfig?.method ?? formMethod ?? "post";
+        const submitPayload = { ...data, ...submitData };
+        const formData =
+          encType === "application/json"
+            ? submitPayload
+            : createFormData(submitPayload, stringifyAllValues);
+        submit(formData, {
+          ...submitConfig,
+          method,
+          encType,
+        });
+      },
     [submit, submitConfig, submitData, stringifyAllValues],
   );
 
@@ -164,11 +170,17 @@ export const useRemixForm = <T extends FieldValues>({
   );
 
   const handleSubmit = useMemo(
-    () =>
-      methods.handleSubmit(
-        submitHandlers?.onValid ?? onSubmit,
-        submitHandlers?.onInvalid ?? onInvalid,
-      ),
+    () => (e: FormEvent<HTMLFormElement>) => {
+      const encType = e?.currentTarget?.enctype as FormEncType | undefined;
+      const method = e?.currentTarget?.method as FormMethod | undefined;
+      const onValidHandler = submitHandlers?.onValid ?? onSubmit;
+      const onInvalidHandler = submitHandlers?.onInvalid ?? onInvalid;
+
+      return methods.handleSubmit(
+        (data, e) => onValidHandler(data, e, encType, method),
+        onInvalidHandler,
+      )(e);
+    },
     [methods.handleSubmit, submitHandlers, onSubmit, onInvalid],
   );
 
