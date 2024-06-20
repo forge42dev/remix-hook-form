@@ -4,6 +4,7 @@
 ![npm](https://img.shields.io/npm/v/remix-hook-form?style=plastic)
 ![GitHub](https://img.shields.io/github/license/Code-Forge-Net/remix-hook-form?style=plastic)
 ![npm](https://img.shields.io/npm/dy/remix-hook-form?style=plastic) 
+![npm](https://img.shields.io/npm/dw/remix-hook-form?style=plastic) 
 ![GitHub top language](https://img.shields.io/github/languages/top/Code-Forge-Net/remix-hook-form?style=plastic) 
 
 Remix-hook-form is a powerful and lightweight wrapper around [react-hook-form](https://react-hook-form.com/) that streamlines the process of working with forms and form data in your [Remix](https://remix.run) applications. With a comprehensive set of hooks and utilities, you'll be able to easily leverage the flexibility of react-hook-form without the headache of boilerplate code.
