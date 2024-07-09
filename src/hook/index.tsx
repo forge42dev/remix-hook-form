@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo } from "react";
+import React, { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import {
   FetcherWithComponents,
   SubmitFunction,
@@ -53,7 +53,7 @@ export const useRemixForm = <T extends FieldValues>({
   ...formProps
 }: UseRemixFormOptions<T>) => {
   const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] =
-    React.useState(false);
+    useState(false);
   const actionSubmit = useSubmit();
   const actionData = useActionData();
   const submit = fetcher?.submit ?? actionSubmit;
@@ -68,10 +68,20 @@ export const useRemixForm = <T extends FieldValues>({
     [navigation.state, navigation.formData, fetcher?.state, fetcher?.formData],
   );
 
+  // A state to keep track whether we're actually submitting the form through the network
+  const [isSubmittingNetwork, setIsSubmittingNetwork] = useState(false);
+  // When the network submission is done, set the state to `false`
+  useEffect(() => {
+    if (!isSubmittingForm) {
+      setIsSubmittingNetwork(false);
+    }
+  }, [isSubmittingForm]);
+
   // Submits the data to the server when form is valid
   const onSubmit = useMemo(
     () =>
       (data: T, e: any, formEncType?: FormEncType, formMethod?: FormMethod) => {
+        setIsSubmittingNetwork(true);
         setIsSubmittedSuccessfully(true);
         const encType = submitConfig?.encType ?? formEncType;
         const method = submitConfig?.method ?? formMethod ?? "post";
@@ -109,7 +119,7 @@ export const useRemixForm = <T extends FieldValues>({
         return isSubmittedSuccessfully || methods.formState.isSubmitSuccessful;
       },
       get isSubmitting() {
-        return isSubmittingForm || methods.formState.isSubmitting;
+        return isSubmittingNetwork || methods.formState.isSubmitting;
       },
       get isValidating() {
         return methods.formState.isValidating;
@@ -139,7 +149,7 @@ export const useRemixForm = <T extends FieldValues>({
         return methods.formState.errors;
       },
     }),
-    [methods.formState, isSubmittedSuccessfully, isSubmittingForm],
+    [methods.formState, isSubmittedSuccessfully, isSubmittingNetwork],
   );
   const reset = useMemo(
     () =>
@@ -202,7 +212,7 @@ export type UseRemixFormReturn = ReturnType<typeof useRemixForm>;
 
 interface RemixFormProviderProps<T extends FieldValues>
   extends Omit<UseFormReturn<T>, "handleSubmit" | "reset"> {
-  children: React.ReactNode;
+  children: ReactNode;
   handleSubmit: any;
   register: any;
   reset: any;
