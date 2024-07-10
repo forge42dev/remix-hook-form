@@ -1,4 +1,10 @@
-import React, { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import React, {
+  FormEvent,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   FetcherWithComponents,
   SubmitFunction,
@@ -52,8 +58,7 @@ export const useRemixForm = <T extends FieldValues>({
   stringifyAllValues = true,
   ...formProps
 }: UseRemixFormOptions<T>) => {
-  const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] =
-    useState(false);
+  const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] = useState(false);
   const actionSubmit = useSubmit();
   const actionData = useActionData();
   const submit = fetcher?.submit ?? actionSubmit;
@@ -63,8 +68,12 @@ export const useRemixForm = <T extends FieldValues>({
   // Either it's submitted to an action or submitted to a fetcher (or neither)
   const isSubmittingForm = useMemo(
     () =>
-      (navigation.state !== "idle" && navigation.formData !== undefined) ||
-      (fetcher && fetcher.state !== "idle" && fetcher.formData !== undefined),
+      Boolean(
+        (navigation.state !== "idle" && navigation.formData !== undefined) ||
+          (fetcher &&
+            fetcher.state !== "idle" &&
+            fetcher.formData !== undefined),
+      ),
     [navigation.state, navigation.formData, fetcher?.state, fetcher?.formData],
   );
 
