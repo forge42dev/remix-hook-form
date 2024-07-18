@@ -8,15 +8,23 @@ import {
 } from "@testing-library/react";
 import { RemixFormProvider, useRemixForm, useRemixFormContext } from "./index";
 import React from "react";
-import { useFetcher } from "@remix-run/react";
+import { useFetcher, type Navigation } from "@remix-run/react";
 
 const submitMock = vi.fn();
 const fetcherSubmitMock = vi.fn();
+
+const useNavigationMock = vi.hoisted(() =>
+  vi.fn<() => Pick<Navigation, "state" | "formData">>(() => ({
+    state: "idle",
+    formData: undefined,
+  })),
+);
+
 vi.mock("@remix-run/react", () => ({
   useSubmit: () => submitMock,
   useActionData: () => ({}),
   useFetcher: () => ({ submit: fetcherSubmitMock, data: {} }),
-  useNavigation: () => ({ state: "idle" }),
+  useNavigation: useNavigationMock,
 }));
 
 describe("useRemixForm", () => {
@@ -205,6 +213,49 @@ describe("useRemixForm", () => {
     });
 
     expect(renderCount()).toBe(3);
+  });
+
+  it("should not flash incorrect isSubmitting status", async () => {
+    submitMock.mockReset();
+    useNavigationMock.mockClear();
+
+    const { result, rerender } = renderHook(() =>
+      useRemixForm({
+        resolver: () => ({ values: {}, errors: {} }),
+        submitConfig: {
+          action: "/submit",
+        },
+      }),
+    );
+
+    expect(result.current.formState.isSubmitting).toBe(false);
+
+    act(() => {
+      result.current.handleSubmit({} as any);
+    });
+    expect(result.current.formState.isSubmitting).toBe(true);
+
+    await waitFor(() => expect(submitMock).toHaveBeenCalledTimes(1));
+
+    expect(result.current.formState.isSubmitting).toBe(true);
+
+    expect(submitMock).toHaveBeenCalledWith(expect.any(FormData), {
+      method: "post",
+      action: "/submit",
+    });
+
+    useNavigationMock.mockReturnValue({
+      state: "submitting",
+      formData: new FormData(),
+    });
+    rerender();
+
+    expect(result.current.formState.isSubmitting).toBe(true);
+
+    useNavigationMock.mockReturnValue({ state: "idle", formData: undefined });
+    rerender();
+
+    expect(result.current.formState.isSubmitting).toBe(false);
   });
 });
 
