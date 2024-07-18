@@ -101,7 +101,9 @@
 
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
-    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+    "skipLibCheck": true, /* Skip type checking all .d.ts files. */
+
+    "verbatimModuleSyntax": true, /* Require `type` prefix for type-only imports */
   },
   "exclude": [
     "./bin/**/*.test.ts",
