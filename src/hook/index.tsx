@@ -18,19 +18,19 @@ import {
   type SubmitErrorHandler,
   type SubmitHandler,
   useFormContext,
+  useForm,
+  FormProvider,
+  type DefaultValues,
+  type FieldValues,
+  type FormState,
+  type KeepStateOptions,
+  type Path,
+  type RegisterOptions,
+  type UseFormHandleSubmit,
+  type UseFormProps,
+  type UseFormReturn,
 } from "react-hook-form";
-import { useForm, FormProvider } from "react-hook-form";
-import type {
-  DefaultValues,
-  FieldValues,
-  FormState,
-  KeepStateOptions,
-  Path,
-  RegisterOptions,
-  UseFormHandleSubmit,
-  UseFormProps,
-  UseFormReturn,
-} from "react-hook-form";
+
 import { createFormData } from "../utilities";
 
 export type SubmitFunctionOptions = Parameters<SubmitFunction>[1];
@@ -189,7 +189,7 @@ export const useRemixForm = <T extends FieldValues>({
   );
 
   const handleSubmit = useMemo(
-    () => (e: FormEvent<HTMLFormElement>) => {
+    () => (e?: FormEvent<HTMLFormElement>) => {
       const encType = e?.currentTarget?.enctype as FormEncType | undefined;
       const method = e?.currentTarget?.method as FormMethod | undefined;
       const onValidHandler = submitHandlers?.onValid ?? onSubmit;
