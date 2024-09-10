@@ -20,6 +20,7 @@ import {
   useFormContext,
   useForm,
   FormProvider,
+  get,
   type DefaultValues,
   type FieldValues,
   type FormState,
@@ -182,10 +183,13 @@ export const useRemixForm = <T extends FieldValues>({
       ) => ({
         ...methods.register(name, options),
         ...(!options?.disableProgressiveEnhancement && {
-          defaultValue: data?.defaultValues?.[name] ?? "",
+          defaultValue:
+            get(data?.defaultValues, name) ??
+            get(methods.formState.defaultValues, name) ??
+            "",
         }),
       }),
-    [methods.register, data?.defaultValues],
+    [methods.register, data?.defaultValues, methods.formState],
   );
 
   const handleSubmit = useMemo(
