@@ -1,4 +1,4 @@
-import type { FieldValues, Resolver, FieldErrors } from "react-hook-form";
+import type { FieldErrors, FieldValues, Resolver } from "react-hook-form";
 
 const tryParseJSON = (jsonString: string) => {
   try {
@@ -138,6 +138,24 @@ export const validateFormData = async <T extends FieldValues>(
 
   return { errors: undefined, data: values as T };
 };
+
+const serializeFormValue = (value: unknown, stringifyAll: boolean) => {
+  if (value instanceof File || value instanceof Blob) {
+    return value;
+  }
+  if (stringifyAll) {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return JSON.stringify(value);
+};
+
 /**
   Creates a new instance of FormData with the specified data and key.
   @template T - The type of the data parameter. It can be any type of FieldValues.
@@ -149,35 +167,19 @@ export const createFormData = <T extends FieldValues>(
   data: T,
   stringifyAll = true,
 ): FormData => {
-  const formData = new FormData();
-  if (!data) {
-    return formData;
-  }
-  Object.entries(data).map(([key, value]) => {
-    if (value instanceof FileList) {
-      for (let i = 0; i < value.length; i++) {
-        formData.append(key, value[i]);
-      }
-      return;
-    }
-    if (value instanceof File || value instanceof Blob) {
-      formData.append(key, value);
-    } else {
-      if (stringifyAll) {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        if (typeof value === "string") {
-          formData.append(key, value);
-        } else if (value instanceof Date) {
-          formData.append(key, value.toISOString());
+  return !data
+    ? new FormData()
+    : Object.entries(data).reduce((formData, [key, value]) => {
+        if (value instanceof FileList) {
+          [...value].forEach((fileValue) => {
+            formData.append(key, fileValue);
+          });
         } else {
-          formData.append(key, JSON.stringify(value));
+          formData.append(key, serializeFormValue(value, stringifyAll));
         }
-      }
-    }
-  });
 
-  return formData;
+        return formData;
+      }, new FormData());
 };
 
 /**
