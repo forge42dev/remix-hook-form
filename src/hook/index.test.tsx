@@ -13,6 +13,8 @@ import { useFetcher, type Navigation } from "@remix-run/react";
 const submitMock = vi.fn();
 const fetcherSubmitMock = vi.fn();
 
+const useActionDataMock = vi.hoisted(() => vi.fn());
+
 const useNavigationMock = vi.hoisted(() =>
   vi.fn<() => Pick<Navigation, "state" | "formData">>(() => ({
     state: "idle",
@@ -22,7 +24,7 @@ const useNavigationMock = vi.hoisted(() =>
 
 vi.mock("@remix-run/react", () => ({
   useSubmit: () => submitMock,
-  useActionData: () => ({}),
+  useActionData: useActionDataMock,
   useFetcher: () => ({ submit: fetcherSubmitMock, data: {} }),
   useNavigation: useNavigationMock,
 }));
@@ -256,6 +258,47 @@ describe("useRemixForm", () => {
     rerender();
 
     expect(result.current.formState.isSubmitting).toBe(false);
+  });
+
+  it("should return defaultValue from the register function", async () => {
+    const { result, rerender } = renderHook(() =>
+      useRemixForm({
+        resolver: () => ({
+          values: { name: "", address: { street: "" } },
+          errors: {},
+        }),
+        defaultValues: {
+          name: "Default name",
+          address: {
+            street: "Default street",
+          },
+        },
+      }),
+    );
+
+    let nameFieldProps = result.current.register("name");
+    let streetFieldProps = result.current.register("address.street");
+
+    expect(nameFieldProps.defaultValue).toBe("Default name");
+    expect(streetFieldProps.defaultValue).toBe("Default street");
+
+    useActionDataMock.mockReturnValue({
+      defaultValues: {
+        name: "Updated name",
+        address: {
+          street: "Updated street",
+        },
+      },
+      errors: { name: "Enter another name" },
+    });
+
+    rerender();
+
+    nameFieldProps = result.current.register("name");
+    streetFieldProps = result.current.register("address.street");
+
+    expect(nameFieldProps.defaultValue).toBe("Updated name");
+    expect(streetFieldProps.defaultValue).toBe("Updated street");
   });
 });
 
