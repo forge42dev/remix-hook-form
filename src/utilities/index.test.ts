@@ -32,6 +32,30 @@ describe("createFormData", () => {
     expect(formData.get("bool")).toEqual(data.bool.toString());
   });
 
+  it("should create a FormData object with the provided data and remove undefined values", () => {
+    const data = {
+      name: "John Doe",
+      age: 30,
+      bool: true,
+      b: undefined,
+      a: null,
+      object: {
+        test: "1",
+        number: 2,
+      },
+      array: [1, 2, 3],
+    };
+    const formData = createFormData(data);
+
+    expect(formData.get("name")).toEqual(JSON.stringify(data.name));
+    expect(formData.get("age")).toEqual(data.age.toString());
+    expect(formData.get("object")).toEqual(JSON.stringify(data.object));
+    expect(formData.get("array")).toEqual(JSON.stringify(data.array));
+    expect(formData.get("bool")).toEqual(data.bool.toString());
+    expect(formData.get("b")).toEqual(null);
+    expect(formData.get("a")).toEqual("null");
+  });
+
   it("should handle null data", () => {
     const formData = createFormData(null as any);
     expect(formData).toBeTruthy();
@@ -349,6 +373,40 @@ describe("createFormData", () => {
       age: 30,
       hobbies: ["Reading", "Writing", "Coding"],
       boolean: true,
+      numbers: [1, 2, 3],
+      other: {
+        skills: ["testing", "testing"],
+        something: "else",
+      },
+    });
+  });
+
+  it("doesn't send undefined values to the backend but sends null values", async () => {
+    const formData = createFormData({
+      name: "123",
+      age: 30,
+      hobbies: ["Reading", "Writing", "Coding"],
+      boolean: true,
+      a: null,
+      b: undefined,
+      numbers: [1, 2, 3],
+      other: {
+        skills: ["testing", "testing"],
+        something: "else",
+      },
+    });
+    const request = new Request("http://localhost:3000", { method: "POST" });
+    const requestFormDataSpy = vi.spyOn(request, "formData");
+
+    requestFormDataSpy.mockResolvedValueOnce(formData);
+    const parsed = await parseFormData<typeof formData>(request);
+
+    expect(parsed).toStrictEqual({
+      name: "123",
+      age: 30,
+      hobbies: ["Reading", "Writing", "Coding"],
+      boolean: true,
+      a: null,
       numbers: [1, 2, 3],
       other: {
         skills: ["testing", "testing"],

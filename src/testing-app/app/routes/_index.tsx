@@ -3,7 +3,7 @@ import {
   json,
   type ActionFunctionArgs,
   unstable_parseMultipartFormData,
-  LoaderFunctionArgs,
+  type LoaderFunctionArgs,
   type UploadHandler,
 } from "@remix-run/node";
 import { Form, useFetcher } from "@remix-run/react";
@@ -17,22 +17,7 @@ import {
   RemixFormProvider,
 } from "remix-hook-form";
 import { z } from "zod";
-import {
-  generateObjectSchema,
-  stringOptional,
-  stringRequired,
-  dateOfBirthRequired,
-  emailOptional,
-  booleanOptional,
-  booleanRequired,
-} from "~/zod";
-const MAX_FILE_SIZE = 500000;
-const ACCEPTED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-];
+
 export const fileUploadHandler =
   (): UploadHandler =>
   async ({ data, filename }) => {
@@ -51,30 +36,26 @@ export const fileUploadHandler =
     return new File([buffer], filename, { type: "image/jpeg" });
   };
 
-export const patientBaseSchema = generateObjectSchema({
-  file: z.any().optional(),
-});
 const FormDataZodSchema = z.object({
   email: z.string().trim().nonempty("validation.required"),
   password: z.string().trim().nonempty("validation.required"),
   number: z.number({ coerce: true }).int().positive(),
   redirectTo: z.string().optional(),
+  boolean: z.boolean().optional(),
+  date: z.date().or(z.string()),
+  null: z.null(),
 });
 
-type FormData = z.infer<typeof patientBaseSchema>;
+type SchemaFormData = z.infer<typeof FormDataZodSchema>;
 
-const resolver = zodResolver(patientBaseSchema);
+const resolver = zodResolver(FormDataZodSchema);
 export const loader = ({ request }: LoaderFunctionArgs) => {
   const data = getFormDataFromSearchParams(request);
   return json({ result: "success" });
 };
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await unstable_parseMultipartFormData(
-    request,
-    fileUploadHandler(),
-  );
-  console.log(formData.get("file"));
-  const { errors, data } = await getValidatedFormData(formData, resolver);
+  const { errors, data } = await getValidatedFormData(request, resolver);
+  console.log(data, errors);
   if (errors) {
     return json(errors, {
       status: 422,
@@ -89,28 +70,26 @@ export default function Index() {
     resolver,
     fetcher,
     defaultValues: {
-      file: undefined,
+      redirectTo: undefined,
+      number: 4,
+      email: "test@test.com",
+      password: "test",
+      date: new Date(),
+      boolean: true,
+      null: null,
     },
     submitData: {
       test: "test",
     },
   });
   const { register, handleSubmit, formState, watch, setError } = methods;
-  useEffect(() => {
-    setError("root.file", {
-      message: "File is required",
-    });
-  }, []);
+
   console.log(formState.errors);
   return (
     <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
 
       <Form method="post" encType="multipart/form-data" onSubmit={handleSubmit}>
-        <input type="file" {...register("file")} />
-        {formState.errors.file && (
-          <p className="error">{formState.errors.file.message}</p>
-        )}
         <div>
           <button type="submit" className="button">
             Add

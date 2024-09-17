@@ -153,29 +153,41 @@ export const createFormData = <T extends FieldValues>(
   if (!data) {
     return formData;
   }
-  Object.entries(data).map(([key, value]) => {
+  for (const [key, value] of Object.entries(data)) {
+    // Skip undefined values
+    if (value === undefined) {
+      continue;
+    }
+    // Handle FileList
     if (value instanceof FileList) {
       for (let i = 0; i < value.length; i++) {
         formData.append(key, value[i]);
       }
-      return;
+      continue;
     }
     if (value instanceof File || value instanceof Blob) {
       formData.append(key, value);
-    } else {
-      if (stringifyAll) {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        if (typeof value === "string") {
-          formData.append(key, value);
-        } else if (value instanceof Date) {
-          formData.append(key, value.toISOString());
-        } else {
-          formData.append(key, JSON.stringify(value));
-        }
-      }
+      continue;
     }
-  });
+    // Stringify all values if set
+    if (stringifyAll) {
+      formData.append(key, JSON.stringify(value));
+      continue;
+    }
+    // Handle strings
+    if (typeof value === "string") {
+      formData.append(key, value);
+      continue;
+    }
+    // Handle dates
+    if (value instanceof Date) {
+      formData.append(key, value.toISOString());
+      continue;
+    }
+    // Handle all the other values
+
+    formData.append(key, JSON.stringify(value));
+  }
 
   return formData;
 };
