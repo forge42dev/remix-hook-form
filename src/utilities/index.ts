@@ -177,15 +177,16 @@ export const createFormData = <T extends FieldValues>(
     // Handle strings
     if (typeof value === "string") {
       formData.append(key, value);
+      continue;
     }
     // Handle dates
     if (value instanceof Date) {
       formData.append(key, value.toISOString());
+      continue;
     }
     // Handle all the other values
-    else {
-      formData.append(key, JSON.stringify(value));
-    }
+
+    formData.append(key, JSON.stringify(value));
   }
 
   return formData;
