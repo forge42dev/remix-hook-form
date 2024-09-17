@@ -33,4 +33,4 @@ function App() {
     </html>
   );
 }
-export default withDevTools(App);
+export default App;
