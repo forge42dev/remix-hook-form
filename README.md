@@ -80,6 +80,137 @@ export default function MyForm() {
 }
 ```
 
+## Serialization of values client => server
+
+By default, all values are serialized to strings before being sent to the server. This is because that is how form data works, it only accepts strings, nulls or files, this means that even strings would get "double stringified" and become strings like this:
+```ts
+const string = "'123'";
+```
+This helps with the fact that validation on the server can't know if your stringified values received from the client are actually strings or numbers or dates or whatever.
+
+For example, if you send this formData to the server:
+
+```ts
+const formData = {
+  name: "123",
+  age: 30,
+  hobbies: ["Reading", "Writing", "Coding"],
+  boolean: true,
+  a: null,
+  // this gets omitted because it's undefined
+  b: undefined,
+  numbers: [1, 2, 3],
+  other: {
+    skills: ["testing", "testing"],
+    something: "else",
+  },
+};
+```
+
+It would be sent to the server as:
+```ts
+{
+  name: "123",
+  age: "30",
+  hobbies: "[\"Reading\",\"Writing\",\"Coding\"]",
+  boolean: "true",
+  a: "null",
+  numbers: "[1,2,3]",
+  other: "{\"skills\":[\"testing\",\"testing\"],\"something\":\"else\"}",
+}
+```
+
+Then the server does not know if the `name` property used to be a string or a number, your validation schema would fail if it parsed it back to a number and you expected it to be a string. Conversely, if you didn't parse the rest of this data you wouldn't have objects,
+arrays etc. but strings. 
+
+The double stringification helps with this as it would correctly parse the data back to the original types, but it also means that you have to use the helpers provided by this package to parse the data back to the original types.
+
+
+
+This is the default behavior, but you can change this behavior by setting the `stringifyAllValues` prop to `false` in the `useRemixForm` hook.
+
+```ts
+const { handleSubmit, formState, register } = useRemixForm({
+  mode: "onSubmit",
+  resolver,
+  stringifyAllValues: false,
+});
+```
+
+This only affects strings really as it either double stringifies them or it doesn't. The bigger impact of all of this is on the server side.
+
+By default all the server helpers expect the data to be double stringified which allows the utils to parse the data back to the original types easily. If you don't want to double stringify the data then you can set the `preserveStringified` prop to `true` in the `getValidatedFormData` function.
+
+```ts
+// Third argument is preserveStringified and is false by default
+const { errors, data } = await getValidatedFormData(request, resolver, true);
+```
+Because the data by default is double stringified the data returned by the util and sent to your validator would look like this:
+
+```ts
+const data = {
+  name: "123",
+  age: 30,
+  hobbies: ["Reading", "Writing", "Coding"],
+  boolean: true,
+  a: null,
+  // this gets omitted because it's undefined
+  b: undefined,
+  numbers: [1, 2, 3],
+  other: {
+    skills: ["testing", "testing"],
+    something: "else",
+  },
+};
+```
+
+If you set `preserveStringified` to `true` then the data would look like this:
+
+```ts
+const data = {
+  name: "123",
+  age: "30",
+  hobbies: ["Reading", "Writing", "Coding"],
+  boolean: "true",
+  a: "null",
+  numbers: ["1","2","3"],
+  other: {
+    skills: ["testing", "testing"],
+    something: "else",
+  },
+};
+
+```
+
+This means that your validator would have to handle all the type conversions and validations for all the different types of data. This is a lot of work and it's not worth it usually, the best place to use this approach if you store the info in searchParams. If you want to handle it like this what you can do is use something like `coerce` from `zod` to convert the data to the correct type before checking it.
+
+```ts
+import { z } from "zod";
+
+const formDataZodSchema = z.object({
+  name: z.string().min(1),
+  // converts the string to a number
+  age: z.coerce.number().int().positive(), 
+});
+
+type SchemaFormData = z.infer<typeof formDataZodSchema>;
+
+const resolver = zodResolver(formDataZodSchema);
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { errors, data } = await getValidatedFormData<SchemaFormData>(
+    request,
+    resolver,
+    true,
+  );
+  if (errors) {
+    return json({ errors });
+  }
+  // Do something with the data
+};
+```
+
+
 ## File Upload example
 
 For more details see [File Uploads guide](https://remix.run/docs/en/main/guides/file-uploads) in Remix docs.
