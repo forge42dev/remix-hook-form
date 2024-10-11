@@ -90,11 +90,26 @@ export const useRemixForm = <T extends FieldValues>({
   // Submits the data to the server when form is valid
   const onSubmit = useMemo(
     () =>
-      (data: T, e: any, formEncType?: FormEncType, formMethod?: FormMethod) => {
+      (
+        data: T,
+        e: any,
+        formEncType?: FormEncType,
+        formMethod?: FormMethod,
+        formAction?: string,
+      ) => {
         setIsSubmittingNetwork(true);
         setIsSubmittedSuccessfully(true);
         const encType = submitConfig?.encType ?? formEncType;
         const method = submitConfig?.method ?? formMethod ?? "post";
+
+        let action = submitConfig?.action;
+        if (!action && formAction) {
+          const formActionUrl = new URL(formAction, window.location.origin);
+          action = formActionUrl.origin === window.location.origin
+            ? `${formActionUrl.pathname}${formActionUrl.search}`
+            : formActionUrl.href;
+        }
+
         const submitPayload = { ...data, ...submitData };
         const formData =
           encType === "application/json"
@@ -104,6 +119,7 @@ export const useRemixForm = <T extends FieldValues>({
           ...submitConfig,
           method,
           encType,
+          action,
         });
       },
     [submit, submitConfig, submitData, stringifyAllValues],
@@ -196,11 +212,12 @@ export const useRemixForm = <T extends FieldValues>({
     () => (e?: FormEvent<HTMLFormElement>) => {
       const encType = e?.currentTarget?.enctype as FormEncType | undefined;
       const method = e?.currentTarget?.method as FormMethod | undefined;
+      const action = e?.currentTarget?.action;
       const onValidHandler = submitHandlers?.onValid ?? onSubmit;
       const onInvalidHandler = submitHandlers?.onInvalid ?? onInvalid;
 
       return methods.handleSubmit(
-        (data, e) => onValidHandler(data, e, encType, method),
+        (data, e) => onValidHandler(data, e, encType, method, action),
         onInvalidHandler,
       )(e);
     },

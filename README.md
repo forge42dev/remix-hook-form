@@ -397,7 +397,10 @@ If you're using a GET request formData is not available on the request so you ca
 - `submitHandlers`: an object containing two properties:
   - `onValid`: can be passed into the function to override the default behavior of the `handleSubmit` success case provided by the hook.
   - `onInvalid`: can be passed into the function to override the default behavior of the `handleSubmit` error case provided by the hook.
-- `submitConfig`: allows you to pass additional configuration to the `useSubmit` function from Remix, such as `{ replace: true }` to replace the current history entry instead of pushing a new one. The `submitConfig` trumps `Form` props from Remix. But the `Form` props are used if no submitConfig is provided.
+- `submitConfig`: allows you to pass additional configuration to the `useSubmit` function from Remix, such as `{ replace: true }` to replace the current history entry instead of pushing a new one. The `submitConfig` trumps `Form` props from Remix. The following props will be used from `Form` if no submitConfig is provided:
+  - `method`
+  - `action`
+  - `encType`
 - `submitData`: allows you to pass additional data to the backend when the form is submitted.
 - `fetcher`: if provided then this fetcher will be used to submit data and get a response (errors / defaultValues) instead of Remix's `useSubmit` and `useActionData` hooks.
 
