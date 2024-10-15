@@ -165,6 +165,16 @@ export const createFormData = <T extends FieldValues>(
       }
       continue;
     }
+    if (
+      value instanceof Array &&
+      value.length > 0 &&
+      (value[0] instanceof File || value[0] instanceof Blob)
+    ) {
+      for (let i = 0; i < value.length; i++) {
+        formData.append(key, value[i]);
+      }
+      continue;
+    }
     if (value instanceof File || value instanceof Blob) {
       formData.append(key, value);
       continue;

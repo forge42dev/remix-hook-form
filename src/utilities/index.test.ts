@@ -350,6 +350,45 @@ describe("validateFormData", () => {
 });
 
 describe("createFormData", () => {
+  it("accepts a file array and maps it properly", async () => {
+    const formData = createFormData({
+      files: [new File(["test"], "test.txt"), new File(["test2"], "test2.txt")],
+    });
+    const files = formData.getAll("files");
+    expect(files).toHaveLength(2);
+    expect(files[0]).toBeInstanceOf(File);
+    expect(files[1]).toBeInstanceOf(File);
+  });
+
+  it("accepts a blob array and maps it properly", async () => {
+    const formData = createFormData({
+      files: [
+        new Blob(["test"], { type: "text/plain" }),
+        new Blob(["test2"], { type: "text/plain" }),
+      ],
+    });
+    const files = formData.getAll("files");
+    expect(files).toHaveLength(2);
+    expect(files[0]).toBeInstanceOf(Blob);
+    expect(files[1]).toBeInstanceOf(Blob);
+  });
+
+  it("accepts a file and adds it properly to formData", async () => {
+    const formData = createFormData({
+      file: new File(["test"], "test.txt"),
+    });
+    const file = formData.get("file");
+    expect(file).toBeInstanceOf(File);
+  });
+
+  it("accepts a blob and adds it properly to formData", async () => {
+    const formData = createFormData({
+      file: new Blob(["test"], { type: "text/plain" }),
+    });
+    const file = formData.get("file");
+    expect(file).toBeInstanceOf(Blob);
+  });
+
   it("doesn't mess up types when passed from frontend to backend", async () => {
     const formData = createFormData({
       name: "123",

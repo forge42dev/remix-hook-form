@@ -1,3 +1,12 @@
+import {
+  type FetcherWithComponents,
+  type FormEncType,
+  type FormMethod,
+  type SubmitFunction,
+  useActionData,
+  useNavigation,
+  useSubmit,
+} from "@remix-run/react";
 import React, {
   type FormEvent,
   type ReactNode,
@@ -6,30 +15,21 @@ import React, {
   useState,
 } from "react";
 import {
-  type FetcherWithComponents,
-  type SubmitFunction,
-  useActionData,
-  useSubmit,
-  useNavigation,
-  type FormEncType,
-  type FormMethod,
-} from "@remix-run/react";
-import {
-  type SubmitErrorHandler,
-  type SubmitHandler,
-  useFormContext,
-  useForm,
-  FormProvider,
-  get,
   type DefaultValues,
   type FieldValues,
+  FormProvider,
   type FormState,
   type KeepStateOptions,
   type Path,
   type RegisterOptions,
+  type SubmitErrorHandler,
+  type SubmitHandler,
   type UseFormHandleSubmit,
   type UseFormProps,
   type UseFormReturn,
+  get,
+  useForm,
+  useFormContext,
 } from "react-hook-form";
 
 import { createFormData } from "../utilities";
@@ -71,9 +71,7 @@ export const useRemixForm = <T extends FieldValues>({
     () =>
       Boolean(
         (navigation.state !== "idle" && navigation.formData !== undefined) ||
-          (fetcher &&
-            fetcher.state !== "idle" &&
-            fetcher.formData !== undefined),
+          (fetcher?.state !== "idle" && fetcher?.formData !== undefined),
       ),
     [navigation.state, navigation.formData, fetcher?.state, fetcher?.formData],
   );
@@ -180,16 +178,21 @@ export const useRemixForm = <T extends FieldValues>({
         options?: RegisterOptions<T> & {
           disableProgressiveEnhancement?: boolean;
         },
-      ) => ({
-        ...methods.register(name, options),
-        ...(!options?.disableProgressiveEnhancement && {
-          defaultValue:
-            get(data?.defaultValues, name) ??
-            get(methods.formState.defaultValues, name) ??
-            "",
-        }),
-      }),
-    [methods.register, data?.defaultValues, methods.formState],
+      ) => {
+        const defaultValue =
+          get(data?.defaultValues, name) ??
+          get(methods.formState.defaultValues, name);
+        return {
+          ...methods.register(name, options),
+          ...(!options?.disableProgressiveEnhancement && {
+            defaultValue:
+              typeof defaultValue === "string" ? defaultValue : undefined,
+            defaultChecked:
+              typeof defaultValue === "boolean" ? defaultValue : undefined,
+          }),
+        };
+      },
+    [methods.register, data?.defaultValues, methods.formState.defaultValues],
   );
 
   const handleSubmit = useMemo(

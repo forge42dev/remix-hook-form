@@ -1,20 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  json,
   type ActionFunctionArgs,
-  unstable_parseMultipartFormData,
   type LoaderFunctionArgs,
   type UploadHandler,
+  json,
+  unstable_parseMultipartFormData,
 } from "@remix-run/node";
 import { Form, useFetcher } from "@remix-run/react";
 import { useEffect } from "react";
 import {
-  getValidatedFormData,
-  useRemixForm,
-  parseFormData,
-  getFormDataFromSearchParams,
-  validateFormData,
   RemixFormProvider,
+  getFormDataFromSearchParams,
+  getValidatedFormData,
+  parseFormData,
+  useRemixForm,
+  validateFormData,
 } from "remix-hook-form";
 import { z } from "zod";
 
@@ -84,12 +84,21 @@ export default function Index() {
   });
   const { register, handleSubmit, formState, watch, setError } = methods;
 
-  console.log(formState.errors);
+  const checkbox = watch("boolean");
+  console.log(checkbox, typeof checkbox);
   return (
     <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
-
       <Form method="post" encType="multipart/form-data" onSubmit={handleSubmit}>
+        <label>
+          Boolean
+          <input type="checkbox" {...register("boolean")} />
+        </label>
+        <label>
+          number
+          <input type="number" {...register("number")} />
+        </label>
+        <div></div>
         <div>
           <button type="submit" className="button">
             Add

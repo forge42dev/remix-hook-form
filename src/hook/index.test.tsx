@@ -280,7 +280,9 @@ describe("useRemixForm", () => {
     let streetFieldProps = result.current.register("address.street");
 
     expect(nameFieldProps.defaultValue).toBe("Default name");
+    expect(nameFieldProps.defaultChecked).toBe(undefined);
     expect(streetFieldProps.defaultValue).toBe("Default street");
+    expect(streetFieldProps.defaultChecked).toBe(undefined);
 
     useActionDataMock.mockReturnValue({
       defaultValues: {
@@ -298,7 +300,49 @@ describe("useRemixForm", () => {
     streetFieldProps = result.current.register("address.street");
 
     expect(nameFieldProps.defaultValue).toBe("Updated name");
+    expect(nameFieldProps.defaultChecked).toBe(undefined);
     expect(streetFieldProps.defaultValue).toBe("Updated street");
+    expect(streetFieldProps.defaultChecked).toBe(undefined);
+  });
+
+  it("should return defaultChecked from the register function when a boolean", async () => {
+    const { result, rerender } = renderHook(() =>
+      useRemixForm({
+        resolver: () => ({
+          values: { name: "", address: { street: "" }, boolean: true },
+          errors: {},
+        }),
+        defaultValues: {
+          name: "Default name",
+          boolean: true,
+          address: {
+            street: "Default street",
+          },
+        },
+      }),
+    );
+
+    let booleanFieldProps = result.current.register("boolean");
+
+    expect(booleanFieldProps.defaultChecked).toBe(true);
+    expect(booleanFieldProps.defaultValue).toBe(undefined);
+
+    useActionDataMock.mockReturnValue({
+      defaultValues: {
+        name: "Updated name",
+        address: {
+          street: "Updated street",
+        },
+        boolean: false,
+      },
+      errors: { name: "Enter another name" },
+    });
+
+    rerender();
+
+    booleanFieldProps = result.current.register("boolean");
+    expect(booleanFieldProps.defaultChecked).toBe(false);
+    expect(booleanFieldProps.defaultValue).toBe(undefined);
   });
 });
 
