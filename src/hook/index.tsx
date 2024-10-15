@@ -101,15 +101,7 @@ export const useRemixForm = <T extends FieldValues>({
         setIsSubmittedSuccessfully(true);
         const encType = submitConfig?.encType ?? formEncType;
         const method = submitConfig?.method ?? formMethod ?? "post";
-
-        let action = submitConfig?.action;
-        if (!action && formAction) {
-          const formActionUrl = new URL(formAction, window.location.origin);
-          action = formActionUrl.origin === window.location.origin
-            ? `${formActionUrl.pathname}${formActionUrl.search}`
-            : formActionUrl.href;
-        }
-
+        const action = submitConfig?.action ?? formAction;
         const submitPayload = { ...data, ...submitData };
         const formData =
           encType === "application/json"
