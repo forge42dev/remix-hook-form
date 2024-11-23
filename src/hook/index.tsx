@@ -1,12 +1,3 @@
-import {
-  type FetcherWithComponents,
-  type FormEncType,
-  type FormMethod,
-  type SubmitFunction,
-  useActionData,
-  useNavigation,
-  useSubmit,
-} from "@remix-run/react";
 import React, {
   type FormEvent,
   type ReactNode,
@@ -31,6 +22,15 @@ import {
   useForm,
   useFormContext,
 } from "react-hook-form";
+import {
+  type FetcherWithComponents,
+  type FormEncType,
+  type FormMethod,
+  type SubmitFunction,
+  useActionData,
+  useNavigation,
+  useSubmit,
+} from "react-router";
 
 import { createFormData } from "../utilities";
 
@@ -63,6 +63,7 @@ export const useRemixForm = <T extends FieldValues>({
   const actionSubmit = useSubmit();
   const actionData = useActionData();
   const submit = fetcher?.submit ?? actionSubmit;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const data: any = fetcher?.data ?? actionData;
   const methods = useForm<T>({ ...formProps, errors: data?.errors });
   const navigation = useNavigation();
@@ -90,6 +91,7 @@ export const useRemixForm = <T extends FieldValues>({
     () =>
       (
         data: T,
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         e: any,
         formEncType?: FormEncType,
         formMethod?: FormMethod,
@@ -105,6 +107,7 @@ export const useRemixForm = <T extends FieldValues>({
           encType === "application/json"
             ? submitPayload
             : createFormData(submitPayload, stringifyAllValues);
+
         submit(formData, {
           ...submitConfig,
           method,
@@ -207,7 +210,11 @@ export const useRemixForm = <T extends FieldValues>({
     () => (e?: FormEvent<HTMLFormElement>) => {
       const encType = e?.currentTarget?.enctype as FormEncType | undefined;
       const method = e?.currentTarget?.method as FormMethod | undefined;
-      const action = e?.currentTarget?.action;
+      const action = e?.currentTarget?.action.replace(
+        window.location.origin,
+        "",
+      );
+
       const onValidHandler = submitHandlers?.onValid ?? onSubmit;
       const onInvalidHandler = submitHandlers?.onInvalid ?? onInvalid;
 
@@ -238,8 +245,11 @@ export type UseRemixFormReturn = ReturnType<typeof useRemixForm>;
 interface RemixFormProviderProps<T extends FieldValues>
   extends Omit<UseFormReturn<T>, "handleSubmit" | "reset"> {
   children: ReactNode;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   handleSubmit: any;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   register: any;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   reset: any;
 }
 export const RemixFormProvider = <T extends FieldValues>({
@@ -253,6 +263,7 @@ export const useRemixFormContext = <T extends FieldValues>() => {
   const methods = useFormContext<T>();
   return {
     ...methods,
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     handleSubmit: methods.handleSubmit as any as ReturnType<
       UseFormHandleSubmit<T>
     >,

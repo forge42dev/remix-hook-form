@@ -1,14 +1,14 @@
 import {
-  renderHook,
   act,
-  waitFor,
   cleanup,
-  render,
   fireEvent,
+  render,
+  renderHook,
+  waitFor,
 } from "@testing-library/react";
-import { RemixFormProvider, useRemixForm, useRemixFormContext } from "./index";
 import React from "react";
-import { useFetcher, type Navigation } from "@remix-run/react";
+import { type Navigation, useFetcher } from "react-router";
+import { RemixFormProvider, useRemixForm, useRemixFormContext } from "./index";
 
 const submitMock = vi.fn();
 const fetcherSubmitMock = vi.fn();
@@ -22,7 +22,7 @@ const useNavigationMock = vi.hoisted(() =>
   })),
 );
 
-vi.mock("@remix-run/react", () => ({
+vi.mock("react-router", () => ({
   useSubmit: () => submitMock,
   useActionData: useActionDataMock,
   useFetcher: () => ({ submit: fetcherSubmitMock, data: {} }),
@@ -73,6 +73,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
@@ -88,6 +89,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
@@ -110,6 +112,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
@@ -135,6 +138,7 @@ describe("useRemixForm", () => {
     );
 
     act(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       result.current.handleSubmit({} as any);
     });
     await waitFor(() => {
@@ -233,6 +237,7 @@ describe("useRemixForm", () => {
     expect(result.current.formState.isSubmitting).toBe(false);
 
     act(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       result.current.handleSubmit({} as any);
     });
     expect(result.current.formState.isSubmitting).toBe(true);
@@ -362,7 +367,7 @@ describe("RemixFormProvider", () => {
 
     const TestComponent = () => {
       const { handleSubmit } = useRemixFormContext();
-      return <form onSubmit={handleSubmit} data-testid="test"></form>;
+      return <form onSubmit={handleSubmit} data-testid="test" />;
     };
 
     const { getByTestId } = render(

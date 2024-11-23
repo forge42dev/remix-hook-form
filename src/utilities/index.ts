@@ -1,4 +1,4 @@
-import type { FieldValues, Resolver, FieldErrors } from "react-hook-form";
+import type { FieldErrors, FieldValues, Resolver } from "react-hook-form";
 
 const tryParseJSON = (jsonString: string) => {
   try {
@@ -23,6 +23,7 @@ export const generateFormData = (
   preserveStringified = false,
 ) => {
   // Initialize an empty output object.
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const outputObject: Record<any, any> = {};
 
   // Iterate through each key-value pair in the form data.
@@ -121,6 +122,7 @@ export const getValidatedFormData = async <T extends FieldValues>(
  * @returns Returns the validated data if successful, otherwise returns the error object
  */
 export const validateFormData = async <T extends FieldValues>(
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   data: any,
   resolver: Resolver<T>,
 ) => {
@@ -166,7 +168,7 @@ export const createFormData = <T extends FieldValues>(
       continue;
     }
     if (
-      value instanceof Array &&
+      Array.isArray(value) &&
       value.length > 0 &&
       (value[0] instanceof File || value[0] instanceof Blob)
     ) {
@@ -211,7 +213,7 @@ Or parses the specified FormData to retrieve the data
 @returns {Promise<T>} - A promise that resolves to the data of type T.
 @throws {Error} - If no data is found for the specified key, or if the retrieved data is not a string.
 */
-export const parseFormData = async <T extends any>(
+export const parseFormData = async <T>(
   request: Request | FormData,
   preserveStringified = false,
 ): Promise<T> => {

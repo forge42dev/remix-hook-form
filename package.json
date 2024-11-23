@@ -1,7 +1,7 @@
 {
   "name": "remix-hook-form",
-  "version": "5.1.1",
-  "description": "Utility wrapper around react-hook-form for use with Remix.run",
+  "version": "6.0.0",
+  "description": "Utility wrapper around react-hook-form for use with react-router v7+",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,15 +26,15 @@
     "dist"
   ],
   "workspaces": [
-    "src/testing-app",
-    "."
+    ".",
+    "test-apps/*"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "remix-dev": "npm run dev -w src/testing-app",
+    "react-router-dev": "npm run dev -w test-apps/react-router",
     "build:dev": "tsup src/index.ts --format cjs,esm --dts",
     "build:dev:watch": "npm run build:dev -- --watch",
-    "dev": "npm-run-all -s build:dev -p remix-dev build:dev:watch",
+    "dev": "npm-run-all -s build:dev -p react-router-dev build:dev:watch",
     "vite": "npm run build --watch -m development",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
@@ -48,12 +48,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Code-Forge-Net/remix-hook-form.git"
+    "url": "git+https://github.com/forge42dev/remix-hook-form.git"
   },
   "keywords": [
     "React",
-    "Remix",
-    "Remix.run",
+    "react-router",
+    "react-router v7",
     "react-hook-form",
     "hooks",
     "forms"
@@ -61,20 +61,18 @@
   "author": "Alem Tuzlak",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Code-Forge-Net/remix-hook-form/issues"
+    "url": "https://github.com/forge42dev/remix-hook-form/issues"
   },
-  "homepage": "https://github.com/Code-Forge-Net/remix-hook-form#readme",
+  "homepage": "https://github.com/forge42dev/remix-hook-form#readme",
   "peerDependencies": {
-    "@remix-run/react": "^2.0.0",
+    "react-router": ">=7.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.51.0"
   },
-  "readme": "https://github.com/Code-Forge-Net/remix-hook-form#readme",
+  "readme": "https://github.com/forge42dev/remix-hook-form#readme",
   "devDependencies": {
     "@hookform/resolvers": "^3.1.0",
-    "@remix-run/node": "^2.3.0",
-    "@remix-run/react": "^2.3.0",
     "@testing-library/react": "^14.0.0",
     "@types/node": "^18.15.11",
     "@types/react": "^18.0.34",
@@ -88,12 +86,10 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.51.0",
-    "remix-development-tools": "^3.1.1",
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
     "tsup": "^7.2.0",
     "typescript": "^5.0.4",
-    "vite": "^4.2.1",
     "vitest": "^2.0.3",
     "zod": "^3.21.4"
   }

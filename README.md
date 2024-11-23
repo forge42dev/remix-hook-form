@@ -7,22 +7,28 @@
 ![npm](https://img.shields.io/npm/dw/remix-hook-form?style=plastic) 
 ![GitHub top language](https://img.shields.io/github/languages/top/Code-Forge-Net/remix-hook-form?style=plastic) 
 
-Remix-hook-form is a powerful and lightweight wrapper around [react-hook-form](https://react-hook-form.com/) that streamlines the process of working with forms and form data in your [Remix](https://remix.run) applications. With a comprehensive set of hooks and utilities, you'll be able to easily leverage the flexibility of react-hook-form without the headache of boilerplate code.
+Remix-hook-form is a powerful and lightweight wrapper around [react-hook-form](https://react-hook-form.com/) that streamlines the process of working with forms and form data in your [React Router](https://reactrouter.com) applications. With a comprehensive set of hooks and utilities, you'll be able to easily leverage the flexibility of react-hook-form without the headache of boilerplate code.
 
 And the best part? Remix-hook-form has zero dependencies, making it easy to integrate into your existing projects and workflows. Say goodbye to bloated dependencies and hello to a cleaner, more efficient development process with Remix-hook-form. 
 
 Oh, and did we mention that this is fully Progressively enhanced? That's right, you can use this with or without javascript!
 
+## Remix.run support
+Versions older than 6.0.0 are compatible with [Remix.run](https://remix.run) applications. If you are using Remix.run, please use version 5.1.1 or lower.
 
 ## Install
 
-    npm install remix-hook-form react-hook-form
+```bash
+npm install remix-hook-form react-hook-form
+```
 
 ## Basic usage
 
 Here is an example usage of remix-hook-form. It will work with **and without** JS. Before running the example, ensure to install additional dependencies:
 
-    npm install zod @hookform/resolvers
+```bash
+npm install zod @hookform/resolvers
+```
 
 ```ts
 import { useRemixForm, getValidatedFormData } from "remix-hook-form";
@@ -210,50 +216,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 ```
 
-
-## File Upload example
-
-For more details see [File Uploads guide](https://remix.run/docs/en/main/guides/file-uploads) in Remix docs.
-
-```ts
-import { unstable_parseMultipartFormData, ActionFunctionArgs, json } from "@remix-run/node"; // or cloudflare/deno
-
-// You can implement your own uploadHandler, this one serves as a basic example of how to handle file uploads
-export const fileUploadHandler =
-  (): UploadHandler =>
-  async ({ data, filename }) => {
-    const chunks = []; 
-    for await (const chunk of data) {
-      chunks.push(chunk);
-    }
-    const buffer = Buffer.concat(chunks);
-    // If there's no filename, it's a text field and we can return the value directly
-    if (!filename) {
-      const textDecoder = new TextDecoder();
-      return textDecoder.decode(buffer);
-    }
-    // Otherwise, it's a file and we need to return a File object
-    return new File([buffer], filename, { type: "image/jpeg" });
-  };
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  // use the upload handler to parse the file
-  const formData = await unstable_parseMultipartFormData(
-    request,
-    fileUploadHandler(),
-  );
-  // The file will be there
-  console.log(formData.get("file"));
-  // validate the form data
-  const { errors, data } = await validateFormData(formData, resolver);
-  if (errors) {
-    return json({ errors }, {
-      status: 422,
-    });
-  }
-  return json({ result: "success" });
-};
-```
+ 
 
 ## Fetcher usage
 
@@ -262,8 +225,8 @@ You can pass in a fetcher as an optional prop and `useRemixForm` will use that f
 
 ## Video example and tutorial
 
-If you wish to learn in depth on how form handling works in Remix and want an example using this package I have prepared a video tutorial on how to do it. It's a bit long but it covers everything 
-you need to know about form handling in Remix. It also covers how to use this package. You can find it here:
+If you wish to learn in depth on how form handling works in React router/Remix.run and want an example using this package I have prepared a video tutorial on how to do it. It's a bit long but it covers everything 
+you need to know about form handling in React Router/Remix. It also covers how to use this package. You can find it here:
 
 https://youtu.be/iom5nnj29sY?si=l52WRE2bqpkS2QUh
 
@@ -391,22 +354,22 @@ If you're using a GET request formData is not available on the request so you ca
 
 ### useRemixForm
 
-`useRemixForm` is a hook that can be used to create a form in your Remix application. It's basically the same as react-hook-form's [`useForm`](https://www.react-hook-form.com/api/useform/) hook, with the following differences:
+`useRemixForm` is a hook that can be used to create a form in your React Router / Remix application. It's basically the same as react-hook-form's [`useForm`](https://www.react-hook-form.com/api/useform/) hook, with the following differences:
 
 **Additional options**
 - `submitHandlers`: an object containing two properties:
   - `onValid`: can be passed into the function to override the default behavior of the `handleSubmit` success case provided by the hook.
   - `onInvalid`: can be passed into the function to override the default behavior of the `handleSubmit` error case provided by the hook.
-- `submitConfig`: allows you to pass additional configuration to the `useSubmit` function from Remix, such as `{ replace: true }` to replace the current history entry instead of pushing a new one. The `submitConfig` trumps `Form` props from Remix. The following props will be used from `Form` if no submitConfig is provided:
+- `submitConfig`: allows you to pass additional configuration to the `useSubmit` function from React Router / Remix, such as `{ replace: true }` to replace the current history entry instead of pushing a new one. The `submitConfig` trumps `Form` props from React Router / Remix. The following props will be used from `Form` if no submitConfig is provided:
   - `method`
   - `action`
   - `encType`
 - `submitData`: allows you to pass additional data to the backend when the form is submitted.
-- `fetcher`: if provided then this fetcher will be used to submit data and get a response (errors / defaultValues) instead of Remix's `useSubmit` and `useActionData` hooks.
+- `fetcher`: if provided then this fetcher will be used to submit data and get a response (errors / defaultValues) instead of React Router/Remix's `useSubmit` and `useActionData` hooks.
 
 **`register` will respect default values returned from the action**
 
-If the Remix hook `useActionData` returns an object with `defaultValues` these will automatically be used as the default value when calling the `register` function. This is useful when the form has errors and you want to persist the values when JS is not enabled. If a `fetcher` is provided default values will be read from the fetcher's data.
+If the React Router/Remix hook `useActionData` returns an object with `defaultValues` these will automatically be used as the default value when calling the `register` function. This is useful when the form has errors and you want to persist the values when JS is not enabled. If a `fetcher` is provided default values will be read from the fetcher's data.
 
 **`handleSubmit`**
 

@@ -57,11 +57,13 @@ describe("createFormData", () => {
   });
 
   it("should handle null data", () => {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const formData = createFormData(null as any);
     expect(formData).toBeTruthy();
   });
 
   it("should handle undefined data", () => {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     const formData = createFormData(undefined as any);
     expect(formData).toBeTruthy();
   });
@@ -505,6 +507,7 @@ describe("getValidatedFormData", () => {
       numbers: array(number()),
     });
     const formData = await getValidatedFormData(
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       request as any,
       zodResolver(schema),
     );
@@ -556,6 +559,7 @@ describe("getValidatedFormData", () => {
       }),
     });
     const validatedFormData = await getValidatedFormData(
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       request as any,
       zodResolver(schema),
     );
@@ -590,6 +594,7 @@ describe("getValidatedFormData", () => {
       }),
     });
     const returnData = await getValidatedFormData(
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       request as any,
       zodResolver(schema),
     );
