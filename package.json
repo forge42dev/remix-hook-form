@@ -64,13 +64,13 @@
     "url": "https://github.com/forge42dev/remix-hook-form/issues"
   },
   "homepage": "https://github.com/forge42dev/remix-hook-form#readme",
+  "readme": "https://github.com/forge42dev/remix-hook-form#readme",
   "peerDependencies": {
-    "react-router": ">=7.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hook-form": "^7.51.0"
+    "react-hook-form": "^7.51.0",
+    "react-router": ">=7.0.0"
   },
-  "readme": "https://github.com/forge42dev/remix-hook-form#readme",
   "devDependencies": {
     "@hookform/resolvers": "^3.1.0",
     "@testing-library/react": "^14.0.0",
@@ -86,6 +86,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.51.0",
+    "react-router": "^7.0.1",
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
     "tsup": "^7.2.0",
