@@ -165,7 +165,7 @@ export const createFormData = <T extends FieldValues>(
       continue;
     }
     // Handle FileList
-    if (value instanceof FileList) {
+    if (typeof FileList !== "undefined" && value instanceof FileList) {
       for (let i = 0; i < value.length; i++) {
         formData.append(key, value[i]);
       }
