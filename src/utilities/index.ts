@@ -13,10 +13,6 @@ const tryParseJSON = (jsonString: string) => {
 /**
  * Generates an output object from the given form data, where the keys in the output object retain
  * the structure of the keys in the form data. Keys containing integer indexes are treated as arrays.
- *
- * @param {FormData} formData - The form data to generate an output object from.
- * @param {boolean} [preserveStringified=false] - Whether to preserve stringified values or try to convert them
- * @returns {Object} The output object generated from the form data.
  */
 export const generateFormData = (
   formData: FormData | URLSearchParams,
@@ -79,10 +75,10 @@ export const generateFormData = (
   return outputObject;
 };
 
-export const getFormDataFromSearchParams = (
+export const getFormDataFromSearchParams = <T extends FieldValues>(
   request: Pick<Request, "url">,
   preserveStringified = false,
-) => {
+): T => {
   const searchParams = new URL(request.url).searchParams;
 
   return generateFormData(searchParams, preserveStringified);
@@ -91,28 +87,36 @@ export const getFormDataFromSearchParams = (
 export const isGet = (request: Pick<Request, "method">) =>
   request.method === "GET" || request.method === "get";
 
+type ReturnData<T extends FieldValues> =
+  | {
+      data: T;
+      errors: undefined;
+      receivedValues: Partial<T>;
+    }
+  | {
+      data: undefined;
+      errors: FieldErrors<T>;
+      receivedValues: Partial<T>;
+    };
 /**
  * Parses the data from an HTTP request and validates it against a schema. Works in both loaders and actions, in loaders it extracts the data from the search params.
  * In actions it extracts it from request formData.
  *
- * @async
- * @param {Request} request - An object that represents an HTTP request.
- * @param validator - A function that resolves the schema.
- * @param {boolean} [preserveStringified=false] - Whether to preserve stringified values or try to convert them
  * @returns A Promise that resolves to an object containing the validated data or any errors that occurred during validation.
  */
 export const getValidatedFormData = async <T extends FieldValues>(
   request: Request | FormData,
   resolver: Resolver<T>,
   preserveStringified = false,
-) => {
-  const data =
+): Promise<ReturnData<T>> => {
+  const receivedValues =
     "url" in request && isGet(request)
-      ? getFormDataFromSearchParams(request, preserveStringified)
+      ? getFormDataFromSearchParams<T>(request, preserveStringified)
       : await parseFormData<T>(request, preserveStringified);
 
-  const validatedOutput = await validateFormData<T>(data, resolver);
-  return { ...validatedOutput, receivedValues: data };
+  const data = await validateFormData<T>(receivedValues, resolver);
+
+  return { ...data, receivedValues };
 };
 
 /**
@@ -207,13 +211,10 @@ export const createFormData = <T extends FieldValues>(
 /**
 Parses the specified Request object's FormData to retrieve the data associated with the specified key.
 Or parses the specified FormData to retrieve the data 
-@template T - The type of the data to be returned.
-@param {Request | FormData} request - The Request object whose FormData is to be parsed.
-@param {boolean} [preserveStringified=false] - Whether to preserve stringified values or try to convert them
-@returns {Promise<T>} - A promise that resolves to the data of type T.
-@throws {Error} - If no data is found for the specified key, or if the retrieved data is not a string.
-*/
-export const parseFormData = async <T>(
+  */
+
+// biome-ignore lint/complexity/noUselessTypeConstraint: <explanation>
+export const parseFormData = async <T extends unknown>(
   request: Request | FormData,
   preserveStringified = false,
 ): Promise<T> => {

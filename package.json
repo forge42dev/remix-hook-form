@@ -1,24 +1,23 @@
 {
   "name": "remix-hook-form",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "Utility wrapper around react-hook-form for use with react-router v7+",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": {
+        "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
-        "default": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "default": "./dist/index.js"
       },
       "require": {
+        "types": "./dist/index.d.cts",
         "import": "./dist/index.cjs",
-        "require": "./dist/index.cjs",
-        "default": "./dist/index.cjs",
-        "types": "./dist/index.d.cts"
-      },
-      "types": "./dist/index.d.ts"
+        "require": "./dist/index.cjs"
+      }
     }
   },
   "typings": "./dist/index.d.ts",
@@ -65,10 +64,10 @@
   },
   "homepage": "https://github.com/forge42dev/remix-hook-form#readme",
   "peerDependencies": {
-    "react-router": ">=7.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hook-form": "^7.51.0"
+    "react-hook-form": "^7.51.0",
+    "react-router": ">=7.0.0"
   },
   "readme": "https://github.com/forge42dev/remix-hook-form#readme",
   "devDependencies": {
@@ -88,7 +87,7 @@
     "react-hook-form": "^7.51.0",
     "rollup": "^3.20.2",
     "rollup-plugin-typescript2": "^0.34.1",
-    "tsup": "^7.2.0",
+    "tsup": "^8.3.5",
     "typescript": "^5.0.4",
     "vitest": "^2.0.3",
     "zod": "^3.21.4"

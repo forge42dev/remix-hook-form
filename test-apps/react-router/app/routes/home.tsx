@@ -29,7 +29,11 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
   return { result: "success" };
 };
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { errors, data: formData } = await getValidatedFormData(
+  const {
+    errors,
+    data: formData,
+    receivedValues,
+  } = await getValidatedFormData<z.infer<typeof FormDataZodSchema>>(
     request,
     resolver,
   );
@@ -39,6 +43,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       status: 422,
     });
   }
+
   console.log(formData);
   return { result: "success" };
 };
@@ -68,7 +73,7 @@ export default function Index() {
     <RemixFormProvider {...methods}>
       <p>Add a thing...</p>
       <Form
-        method="post"
+        method="PATCH"
         action="/?index"
         encType="multipart/form-data"
         onSubmit={handleSubmit}
