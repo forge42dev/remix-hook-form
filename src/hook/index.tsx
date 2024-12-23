@@ -30,6 +30,7 @@ import {
   useActionData,
   useNavigation,
   useSubmit,
+  useHref,
 } from "react-router";
 
 import { createFormData } from "../utilities";
@@ -60,6 +61,7 @@ export const useRemixForm = <T extends FieldValues>({
   ...formProps
 }: UseRemixFormOptions<T>) => {
   const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] = useState(false);
+  const basename = useHref("/");
   const actionSubmit = useSubmit();
   const actionData = useActionData();
   const submit = fetcher?.submit ?? actionSubmit;
@@ -211,7 +213,7 @@ export const useRemixForm = <T extends FieldValues>({
       const encType = e?.currentTarget?.enctype as FormEncType | undefined;
       const method = e?.currentTarget?.method as FormMethod | undefined;
       const action = e?.currentTarget?.action.replace(
-        window.location.origin,
+        `${window.location.origin}${basename === "/" ? "" : basename}`,
         "",
       );
 
