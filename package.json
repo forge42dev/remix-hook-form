@@ -1,6 +1,6 @@
 {
   "name": "remix-hook-form",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "description": "Utility wrapper around react-hook-form for use with react-router v7+",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -64,8 +64,8 @@
   },
   "homepage": "https://github.com/forge42dev/remix-hook-form#readme",
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0",
     "react-hook-form": "^7.51.0",
     "react-router": ">=7.0.0"
   },
