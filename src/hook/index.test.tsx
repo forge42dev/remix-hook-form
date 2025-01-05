@@ -22,11 +22,14 @@ const useNavigationMock = vi.hoisted(() =>
   })),
 );
 
+const useHrefMock = vi.hoisted(() => vi.fn());
+
 vi.mock("react-router", () => ({
   useSubmit: () => submitMock,
   useActionData: useActionDataMock,
   useFetcher: () => ({ submit: fetcherSubmitMock, data: {} }),
   useNavigation: useNavigationMock,
+  useHref: useHrefMock,
 }));
 
 describe("useRemixForm", () => {
@@ -145,6 +148,39 @@ describe("useRemixForm", () => {
       expect(fetcherSubmitMock).toHaveBeenCalledWith(expect.any(FormData), {
         method: "post",
         action: "/submit",
+      });
+    });
+  });
+
+  it("should remove origin and basename from the action", async () => {
+    submitMock.mockReset();
+    useHrefMock.mockImplementation((to) => {
+      if (to === "/") {
+        return "/my-basename";
+      }
+    });
+    vi.spyOn(window, "location", "get").mockReturnValueOnce({
+      origin: "http://example.com",
+    } as any);
+
+    const { result } = renderHook(() =>
+      useRemixForm({
+        resolver: () => ({ values: {}, errors: {} }),
+      }),
+    );
+
+    act(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      result.current.handleSubmit({
+        currentTarget: {
+          action: "http://example.com/my-basename/basename-test-submit",
+        },
+      } as any);
+    });
+    await waitFor(() => {
+      expect(submitMock).toHaveBeenCalledWith(expect.any(FormData), {
+        method: "post",
+        action: "/basename-test-submit",
       });
     });
   });
