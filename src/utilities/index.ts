@@ -174,6 +174,7 @@ export const createFormData = <T extends FieldValues>(
       }
       continue;
     }
+    // Handle array of Files
     if (
       Array.isArray(value) &&
       value.length > 0 &&
@@ -184,6 +185,7 @@ export const createFormData = <T extends FieldValues>(
       }
       continue;
     }
+    // Handle File or Blob
     if (value instanceof File || value instanceof Blob) {
       formData.append(key, value);
       continue;
