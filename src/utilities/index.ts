@@ -1,12 +1,15 @@
 import type { FieldErrors, FieldValues, Resolver } from "react-hook-form";
 
-const tryParseJSON = (jsonString: string) => {
+const tryParseJSON = (value: string | File) => {
+  if (value instanceof File) {
+    return value;
+  }
   try {
-    const json = JSON.parse(jsonString);
+    const json = JSON.parse(value);
 
     return json;
   } catch (e) {
-    return jsonString;
+    return value;
   }
 };
 
@@ -25,7 +28,7 @@ export const generateFormData = (
   // Iterate through each key-value pair in the form data.
   for (const [key, value] of formData.entries()) {
     // Try to convert data to the original type, otherwise return the original value
-    const data = preserveStringified ? value : tryParseJSON(value.toString());
+    const data = preserveStringified ? value : tryParseJSON(value);
     // Split the key into an array of parts.
     const keyParts = key.split(".");
     // Initialize a variable to point to the current object in the output object.
