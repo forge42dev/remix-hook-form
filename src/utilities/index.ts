@@ -174,11 +174,11 @@ export const createFormData = <T extends FieldValues>(
       }
       continue;
     }
-    // Handle non-empty arrays where the first element is a File or Blob
+    // Handle array of File and Blob objects
     if (
       Array.isArray(value) &&
       value.length > 0 &&
-      (value[0] instanceof File || value[0] instanceof Blob)
+      value.every((item) => item instanceof File || item instanceof Blob)
     ) {
       for (let i = 0; i < value.length; i++) {
         formData.append(key, value[i]);
