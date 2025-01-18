@@ -174,7 +174,7 @@ export const createFormData = <T extends FieldValues>(
       }
       continue;
     }
-    // Handle array of Files
+    // Handle non-empty arrays where the first element is a File or Blob
     if (
       Array.isArray(value) &&
       value.length > 0 &&
