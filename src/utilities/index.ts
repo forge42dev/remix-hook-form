@@ -1,7 +1,7 @@
 import type { FieldErrors, FieldValues, Resolver } from "react-hook-form";
 
-const tryParseJSON = (value: string | File) => {
-  if (value instanceof File) {
+const tryParseJSON = (value: string | File | Blob) => {
+  if (value instanceof File || value instanceof Blob) {
     return value;
   }
   try {
