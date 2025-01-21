@@ -28,9 +28,9 @@ import {
   type FormMethod,
   type SubmitFunction,
   useActionData,
+  useHref,
   useNavigation,
   useSubmit,
-  useHref,
 } from "react-router";
 
 import { createFormData } from "../utilities";
@@ -225,7 +225,7 @@ export const useRemixForm = <T extends FieldValues>({
         onInvalidHandler,
       )(e);
     },
-    [methods.handleSubmit, submitHandlers, onSubmit, onInvalid],
+    [methods.handleSubmit, submitHandlers, onSubmit, onInvalid, basename],
   );
 
   const hookReturn = useMemo(
@@ -242,7 +242,11 @@ export const useRemixForm = <T extends FieldValues>({
   return hookReturn;
 };
 
-export type UseRemixFormReturn = ReturnType<typeof useRemixForm>;
+export type UseRemixFormReturn<T extends FieldValues> = UseFormReturn<T> & {
+  handleSubmit: ReturnType<typeof useRemixForm>["handleSubmit"];
+  reset: ReturnType<typeof useRemixForm>["reset"];
+  register: ReturnType<typeof useRemixForm>["register"];
+};
 
 interface RemixFormProviderProps<T extends FieldValues>
   extends Omit<UseFormReturn<T>, "handleSubmit" | "reset"> {

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, useFetcher } from "react-router";
+import { type ClientActionFunctionArgs, Form, useFetcher } from "react-router";
 import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
@@ -47,7 +47,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   console.log(formData);
   return { result: "success" };
 };
-
+export const clientAction = async ({
+  request,
+  serverAction,
+}: ClientActionFunctionArgs) => {
+  return { result: "success" };
+};
 export default function Index() {
   const fetcher = useFetcher();
   const methods = useRemixForm({

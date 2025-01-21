@@ -137,10 +137,10 @@ describe("parseFormData", () => {
     const requestFormDataSpy = vi.spyOn(request, "formData");
     const blob = new Blob(["Hello, world!"], { type: "text/plain" });
     const mockFormData = new FormData();
-    mockFormData.append("formData", blob);
+    mockFormData.append("file", blob);
     requestFormDataSpy.mockResolvedValueOnce(mockFormData);
-    const data = await parseFormData<{ formData: any }>(request);
-    expect(data.formData).toBeTypeOf("object");
+    const data = await parseFormData<{ file: Blob }>(request);
+    expect(data.file).toBeTypeOf("object");
   });
 });
 
