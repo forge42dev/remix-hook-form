@@ -1,12 +1,15 @@
 import type { FieldErrors, FieldValues, Resolver } from "react-hook-form";
 
-const tryParseJSON = (jsonString: string) => {
+const tryParseJSON = (value: string | File | Blob) => {
+  if (value instanceof File || value instanceof Blob) {
+    return value;
+  }
   try {
-    const json = JSON.parse(jsonString);
+    const json = JSON.parse(value);
 
     return json;
   } catch (e) {
-    return jsonString;
+    return value;
   }
 };
 
@@ -25,7 +28,7 @@ export const generateFormData = (
   // Iterate through each key-value pair in the form data.
   for (const [key, value] of formData.entries()) {
     // Try to convert data to the original type, otherwise return the original value
-    const data = preserveStringified ? value : tryParseJSON(value.toString());
+    const data = preserveStringified ? value : tryParseJSON(value);
     // Split the key into an array of parts.
     const keyParts = key.split(".");
     // Initialize a variable to point to the current object in the output object.
@@ -171,16 +174,18 @@ export const createFormData = <T extends FieldValues>(
       }
       continue;
     }
+    // Handle array of File and Blob objects
     if (
       Array.isArray(value) &&
       value.length > 0 &&
-      (value[0] instanceof File || value[0] instanceof Blob)
+      value.every((item) => item instanceof File || item instanceof Blob)
     ) {
       for (let i = 0; i < value.length; i++) {
         formData.append(key, value[i]);
       }
       continue;
     }
+    // Handle File or Blob
     if (value instanceof File || value instanceof Blob) {
       formData.append(key, value);
       continue;

@@ -140,7 +140,7 @@ describe("parseFormData", () => {
     mockFormData.append("formData", blob);
     requestFormDataSpy.mockResolvedValueOnce(mockFormData);
     const data = await parseFormData<{ formData: any }>(request);
-    expect(data.formData).toBeTypeOf("string");
+    expect(data.formData).toBeTypeOf("object");
   });
 });
 
