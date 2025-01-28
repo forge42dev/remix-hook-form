@@ -358,7 +358,7 @@ If you're using a GET request formData is not available on the request so you ca
 
 **Additional options**
 - `submitHandlers`: an object containing two properties:
-  - `onValid`: can be passed into the function to override the default behavior of the `handleSubmit` success case provided by the hook.
+  - `onValid`: can be passed into the function to override the default behavior of the `handleSubmit` success case provided by the hook. If you need to pass additional data not tracked in the form, you'll need to manually merge it here with your form data to be submitted, as the `submitData` hook option is ignored in this case.
   - `onInvalid`: can be passed into the function to override the default behavior of the `handleSubmit` error case provided by the hook.
 - `submitConfig`: allows you to pass additional configuration to the `useSubmit` function from React Router / Remix, such as `{ replace: true }` to replace the current history entry instead of pushing a new one. The `submitConfig` trumps `Form` props from React Router / Remix. The following props will be used from `Form` if no submitConfig is provided:
   - `method`
@@ -424,6 +424,17 @@ The `errors` object inside `formState` is automatically populated with the error
     },
   });
 
+  // or if customizing with `onValid` handler
+  const { ... } = useRemixForm({
+    ...ALL_THE_SAME_CONFIG_AS_REACT_HOOK_FORM,
+    submitHandlers: {
+      onValid: data => { 
+        const mergedData = { ...data, someFieldsOutsideTheForm: "someValue" }
+        const formData = createFormData(mergedData);
+        // ... submit
+      }
+    }
+  });
 ```
 
 ### RemixFormProvider
